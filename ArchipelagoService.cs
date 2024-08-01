@@ -32,14 +32,15 @@ namespace Ryguy9999.ATS.ATSForAP {
         private static Queue<string> LocationQueue = new Queue<string>();
         private static Dictionary<string, Sprite> OriginalGoodIcons = new Dictionary<string, Sprite>();
         private static bool ShowAPLockIcons = true;
-        private static List<string> ItemsForNews = new List<string>();
+        private static List<(Sprite icon, string message, string detail)> ItemsForNews = new List<(Sprite icon, string message, string detail)>();
         private static int VillagersToSpawn = 0;
         private static News ApConnectionNews;
         private static List<int> ReputationLocationIndices = new List<int>();
 
         public static bool TreatBlueprintsAsItems = false;
 
-        ///*
+
+        /*
         // TODO DELETEME
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static void InitializeAPConnection() {
@@ -52,31 +53,33 @@ namespace Ryguy9999.ATS.ATSForAP {
         }
         //*/
 
+
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
-        public static void InitializeAPConnection(string url, string player) {
+        public static void InitializeAPConnection([APUrlSuggestion] string url, string player) {
             InitializeAPConnection(url, player, null);
         }
 
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
-        public static void InitializeAPConnection(string url, string player, string password) {
+        public static void InitializeAPConnection([APUrlSuggestion] string url, string player, string password) {
             // TODO more trade locations. configure number of random ones like subnautica fish scans?
             // TODO event decisions tag locations
             // TODO food/service utopia locs?
             // TODO global resolve filler items?
-            // TODO item gifting?
             // TODO goal options, ie require multiple tasks per phase or Item macguffins
-            // TODO change 30 housed back to slowupdate
             // TODO locations in sealed forest as well
-            // TODO more convenient good blocking, eg event rewards (patch? Relic.AddAllRewards)
             // TODO add option to continue normal BP drafts in addition to Items
-            // TODO add "archipelago:" as autocomplete
+            // TODO harder logic mode
+
+            // TODO item gifting?
+
+            // TODO more convenient good blocking, eg event rewards (patch? Relic.AddAllRewards)
             // TODO preset training expedition to recommended settings
             // TODO block Shift N next season
-            // TODO harder logic mode
-            // TODO news about bp unlock from AP
             // TODO block checks after settlement complete
+
             // TODO check all 50 Resolve locations, some dont send?
             // TODO repro goal softlock
+            // TODO repro .3.3 -> .4.x lizard 1st rep doesnt send unti 5th order
 
             if (session != null) {
                 DisconnectFromGame();
@@ -114,8 +117,14 @@ namespace Ryguy9999.ATS.ATSForAP {
                 }
             }
 
-            while(LocationQueue.Any()) {
-                CheckLocation(LocationQueue.Dequeue());
+            if(LocationQueue.Any()) {
+                Plugin.Log($"Detected {LocationQueue.Count} location(s) stored while disconnected from AP. Sending now.");
+                var flushQueue = new Queue<string>(LocationQueue);
+                LocationQueue.Clear();
+
+                while(flushQueue.Any()) {
+                    CheckLocation(flushQueue.Dequeue());
+                }
             }
 
             if (loginSuccess.SlotData.ContainsKey("blueprint_items")) {
@@ -261,7 +270,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                             Plugin.Log("Could not find filler item: " + fillerType);
                         }
                         GameMB.StorageService.Store(new Good(Constants.ITEM_DICT[fillerType].ToName(), fillerQty), StorageOperationType.Other);
-                        ItemsForNews.Add($"{fillerQty} {fillerType}");
+                        ItemsForNews.Add((GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[fillerType].ToName()), $"{fillerQty} {fillerType} received from AP!", $"{fillerType} received. You will also receive this bonus in all future settlements."));
                     }
 
                     continue;
@@ -308,7 +317,6 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             GameSubscriptions.Add(GameMB.OrdersService.OnOrderCompleted.Subscribe(new Action<OrderState>(HandleOrderRewards)));
-            GameSubscriptions.Add(GameMB.ReputationService.OnReputationChanged.Subscribe(new Action<ReputationChange>(HandleReputationChange)));
             GameSubscriptions.Add(GameMB.ReputationService.OnGameResult.Subscribe(new Action<bool>(HandleGameResult)));
             GameSubscriptions.Add(GameMB.GameBlackboardService.OnHubLeveledUp.Subscribe(new Action<Hearth>(HandleHubLevelUp)));
             GameSubscriptions.Add(GameMB.GameBlackboardService.OnRelicResolved.Subscribe(new Action<Relic>(HandleRelicResolve)));
@@ -447,16 +455,32 @@ namespace Ryguy9999.ATS.ATSForAP {
             session.Socket.SendPacket(new SayPacket() { Text = message });
         }
 
+        private static Dictionary<long, int> locationsAlreadySent = new Dictionary<long, int>();
         public static bool CheckLocation(string location) {
             if(session == null) {
                 LocationQueue.Enqueue(location);
             }
 
             var locId = session.Locations.GetLocationIdFromName(Constants.AP_GAME_NAME, location);
-            if (locId < 0 || session.Locations.AllLocationsChecked.Contains(locId)) {
-                Plugin.Log($"{location}");
+            if (locId < 0) {
+                Plugin.Log($"Location with unknown id: {location}");
                 return false;
             }
+            if(session.Locations.AllLocationsChecked.Contains(locId)) {
+                if(locationsAlreadySent.ContainsKey(locId)) {
+                    locationsAlreadySent[locId]++;
+                    if (locationsAlreadySent[locId] == 10) {
+                        Plugin.Log($"Silencing: {location}");
+                    } else if(locationsAlreadySent[locId] < 10) {
+                        Plugin.Log($"Location already checked: {location}");
+                    }
+                } else {
+                    locationsAlreadySent[locId] = 1;
+                    Plugin.Log($"Location already checked: {location}");
+                }
+                return false;
+            }
+
             Plugin.Log($"Sending AP Location: {location}");
             session.Locations.CompleteLocationChecks(locId);
             return true;
@@ -492,35 +516,6 @@ namespace Ryguy9999.ATS.ATSForAP {
         private static void HandleOrderRewards(OrderState order) {
             int orderIndex = GameMB.StateService.Orders.currentOrders.FindIndex(o => o.id == order.id) + 1;
             CheckLocation("Completed Order - " + orderIndex + GetOrdinalSuffix(orderIndex) + " Pack");
-        }
-
-        private static void HandleReputationChange(ReputationChange repChange) {
-            // Reputation from Resolve
-            if (GameMB.RacesService.HasRace("Human") && GameMB.ResolveService.GetReputationGainFor("Human") >= 1) {
-                CheckLocation("First Reputation through Resolve - Humans");
-            }
-            if(GameMB.RacesService.HasRace("Lizard") && GameMB.ResolveService.GetReputationGainFor("Lizard") >= 1) {
-                CheckLocation("First Reputation through Resolve - Lizards");
-            }
-            if(GameMB.RacesService.HasRace("Beaver") && GameMB.ResolveService.GetReputationGainFor("Beaver") >= 1) {
-                CheckLocation("First Reputation through Resolve - Beavers");
-            }
-            if(GameMB.RacesService.HasRace("Harpy") && GameMB.ResolveService.GetReputationGainFor("Harpy") >= 1) {
-                CheckLocation("First Reputation through Resolve - Harpies");
-            }
-            if(GameMB.RacesService.HasRace("Foxes") && GameMB.ResolveService.GetReputationGainFor("Foxes") >= 1) {
-                CheckLocation("First Reputation through Resolve - Foxes");
-            }
-
-            // Overall Reputation for biome
-            var repGained = GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Order) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Other) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Relics) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Resolve);
-
-            foreach(int repIndex in ReputationLocationIndices) {
-                if(repGained >= repIndex) {
-                    var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard");
-                    CheckLocation($"{repIndex}{GetOrdinalSuffix(repIndex)} Reputation - {biome}");
-                }
-            }
         }
 
         private static void HandleGameResult(bool gameWon) {
@@ -568,6 +563,33 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return;
             }
 
+            // Reputation from Resolve
+            if (GameMB.RacesService.HasRace("Human") && GameMB.ResolveService.GetReputationGainFor("Human") >= 1) {
+                CheckLocation("First Reputation through Resolve - Humans");
+            }
+            if (GameMB.RacesService.HasRace("Lizard") && GameMB.ResolveService.GetReputationGainFor("Lizard") >= 1) {
+                CheckLocation("First Reputation through Resolve - Lizards");
+            }
+            if (GameMB.RacesService.HasRace("Beaver") && GameMB.ResolveService.GetReputationGainFor("Beaver") >= 1) {
+                CheckLocation("First Reputation through Resolve - Beavers");
+            }
+            if (GameMB.RacesService.HasRace("Harpy") && GameMB.ResolveService.GetReputationGainFor("Harpy") >= 1) {
+                CheckLocation("First Reputation through Resolve - Harpies");
+            }
+            if (GameMB.RacesService.HasRace("Foxes") && GameMB.ResolveService.GetReputationGainFor("Foxes") >= 1) {
+                CheckLocation("First Reputation through Resolve - Foxes");
+            }
+
+            // Overall Reputation for biome
+            var repGained = GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Order) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Other) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Relics) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Resolve);
+
+            foreach (int repIndex in ReputationLocationIndices) {
+                if (repGained >= repIndex) {
+                    var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard");
+                    CheckLocation($"{repIndex}{GetOrdinalSuffix(repIndex)} Reputation - {biome}");
+                }
+            }
+
             // 50 Resolve check
             if (GameMB.RacesService.HasRace("Human") && GameMB.ResolveService.GetResolveFor("Human") >= 50) {
                 CheckLocation("50 Resolve - Humans");
@@ -613,12 +635,7 @@ namespace Ryguy9999.ATS.ATSForAP {
 
             // Handle filler item news in a game thread, as ItemReceived causes crashes
             while (ItemsForNews.Any()) {
-                var itemName = ItemsForNews[0];
-                if(char.IsDigit(itemName[0])) {
-                    GameMB.NewsService.PublishNews($"{itemName} received from AP!", $"{itemName} received. You will also receive this bonus in all future settlements.", AlertSeverity.Info, GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[itemName.Split(new[] { ' ' }, 2)[1]].ToName()));
-                } else {
-                    GameMB.NewsService.PublishNews($"{itemName} unlocked!", $"{itemName} received from AP. You can now produce, gather, and obtain {itemName}.", AlertSeverity.Info, GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[itemName].ToName()));
-                }
+                GameMB.NewsService.PublishNews(ItemsForNews[0].message, ItemsForNews[0].detail, AlertSeverity.Info, ItemsForNews[0].icon);
                 ItemsForNews.RemoveAt(0);
             }
         }
@@ -658,7 +675,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return;
             }
 
-            string goodName = Constants.ITEM_DICT.FirstOrDefault(pair => pair.Value.ToName() == route.good.name).Key;
+            string goodName = route.good.name.Contains("[Water]") ? route.good.name.Replace("[Water] ", "") :  Constants.ITEM_DICT.FirstOrDefault(pair => pair.Value.ToName() == route.good.name).Key;
             CheckLocation($"Trade - {route.good.amount} {goodName}");
         }
 
@@ -675,7 +692,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                     VillagersToSpawn += fillerQty;
                 } else {
                     GameMB.StorageService.Store(new Good(Constants.ITEM_DICT[fillerType].ToName(), fillerQty), StorageOperationType.Other);
-                    ItemsForNews.Add($"{fillerQty} {fillerType}");
+                    ItemsForNews.Add((GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[fillerType].ToName()), $"{fillerQty} {fillerType} received from AP!", $"{fillerQty} {fillerType} received. You will also receive this bonus in all future settlements."));
                 }
 
                 return;
@@ -685,6 +702,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             itemName = GetIDFromWorkshopName(itemName);
             if(GameMB.Settings.ContainsBuilding(itemName)) {
                 GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(itemName));
+                ItemsForNews.Add((null, $"{itemName} received from AP!", $"{itemName} received. You can now build this blueprint in this and all future settlements."));
                 return;
             }
 
@@ -695,7 +713,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                         GameMB.Settings.GetGood(itemId).icon = OriginalGoodIcons[itemId];
                     }
                     SO.EffectsService.GrantRawGoodProduction(itemId, Constants.PRODUCTIVITY_MODIFIER);
-                    ItemsForNews.Add(itemName);
+                    ItemsForNews.Add((GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[itemName].ToName()), $"{itemName} unlocked!", $"{itemName} received from AP. You can now produce, gather, and obtain {itemName}."));
                 }
                 return;
             }
