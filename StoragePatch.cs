@@ -4,8 +4,10 @@ using Eremite.Buildings;
 using Eremite.Model;
 using Eremite.Model.State;
 using Eremite.Services;
+using Eremite.View.HUD;
 using Eremite.View.HUD.Reputation;
 using Eremite.View.HUD.TradeRoutes;
+using Eremite.WorldMap.UI.CustomGames;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -72,6 +74,42 @@ namespace Ryguy9999.ATS.ATSForAP {
             // Prevent natural blueprint selection when receiving them from AP
             if (ArchipelagoService.TreatBlueprintsAsItems) {
                 amount = GameMB.EffectsService.GetWildcardPicksLeft();
+            }
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CalendarDisplay), nameof(CalendarDisplay.SelfUpdate))]
+        private static bool CalendarUpdatePrefix(CalendarDisplay __instance) {
+            __instance.UpdateCalendar(GameMB.CalendarService.GetCurrentSeasonProgress());
+            __instance.CheckForStormSound();
+            // Never run the original, it listens for DevNextSeason which we are trying to disable here
+            return false;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(Relic), nameof(Relic.AddAllRewards))]
+        private static void RelicAllRewardsPostfix(Relic __instance) {
+            // After a completed event calculates its rewards, we come in and strip all the items not unlocked
+            // through AP, just so scouts don't spend a long time hauling goods that won't store
+            foreach(Good good in __instance.state.rewards.ToList()) {
+                if(!ArchipelagoService.HasReceivedItem(good.name)) {
+                    __instance.state.rewards.Remove(good);
+                }
+            }
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CustomGameTradeTownsPanel), nameof(CustomGameTradeTownsPanel.PrepareAll))]
+        private static void CustomGameTradeTownSetUpPostfix(CustomGameTradeTownsPanel __instance) {
+            // Start the first 4 trade towns as selected, as that's probably the better default
+            Plugin.Log(__instance.ToString());
+            Plugin.Log(__instance.picked.ToString());
+            Plugin.Log(__instance.picked.Count.ToString());
+            Plugin.Log(__instance.all.ToString());
+            Plugin.Log(__instance.all.Count.ToString());
+            for (int i = 0; i < 4 && i < __instance.all.Count; i++) {
+                Plugin.Log(__instance.all[i].faction);
+                __instance.picked.Add(__instance.all[i]);
             }
         }
     }

@@ -61,24 +61,19 @@ namespace Ryguy9999.ATS.ATSForAP {
 
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static void InitializeAPConnection([APUrlSuggestion] string url, string player, string password) {
-            // TODO more trade locations. configure number of random ones like subnautica fish scans?
+            // TODO  more trade locations. configure number of random ones like subnautica fish scans?
             // TODO event decisions tag locations
-            // TODO food/service utopia locs?
-            // TODO global resolve filler items?
-            // TODO goal options, ie require multiple tasks per phase or Item macguffins
+            // TODO  goal options, ie require multiple tasks per phase or Item macguffins
+            // TODO  add option to continue normal BP drafts in addition to Items
             // TODO locations in sealed forest as well
-            // TODO add option to continue normal BP drafts in addition to Items
-            // TODO harder logic mode
 
             // TODO item gifting?
 
-            // TODO more convenient good blocking, eg event rewards (patch? Relic.AddAllRewards)
-            // TODO preset training expedition to recommended settings
-            // TODO block Shift N next season
-            // TODO block checks after settlement complete
+            // TODO food/service utopia locs?
+            // TODO global resolve filler items?
+            // TODO harder logic mode
 
             // TODO check all 50 Resolve locations, some dont send?
-            // TODO repro goal softlock
             // TODO repro .3.3 -> .4.x lizard 1st rep doesnt send unti 5th order
 
             if (session != null) {
