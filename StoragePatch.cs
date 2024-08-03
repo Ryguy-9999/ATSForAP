@@ -1,6 +1,7 @@
 ﻿using ATS_API.Helpers;
 using Eremite;
 using Eremite.Buildings;
+using Eremite.Buildings.UI;
 using Eremite.Model;
 using Eremite.Model.State;
 using Eremite.Services;
@@ -41,6 +42,15 @@ namespace Ryguy9999.ATS.ATSForAP {
         [HarmonyPatch(new Type[] { typeof(WorkshopRecipeModel), typeof(int), typeof(bool), typeof(bool), typeof(bool) })]
         private static void WorkshopRecipeStatePostfix(WorkshopRecipeState __instance, WorkshopRecipeModel model, int limit, bool firstIngredientEnabled, bool secondaryIngredientsEnabled, bool allRecipesEnabled) {
             __instance.active = __instance.active && ArchipelagoService.HasReceivedItem(model.producedGood.Name);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GathererHut), nameof(GathererHut.SetUp))]
+        [HarmonyPatch(new Type[] { typeof(GathererHutModel), typeof(GathererHutState) })]
+        private static void CampSetUpPostfix(GathererHut __instance, GathererHutModel model, GathererHutState state) {
+            foreach(var recipe in __instance.state.recipes) {
+                recipe.active = recipe.active && ArchipelagoService.HasReceivedItem(GameMB.Settings.GetRecipe(recipe.model).GetProducedGood());
+            }
         }
 
         [HarmonyPrefix]
