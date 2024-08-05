@@ -707,10 +707,8 @@ namespace Ryguy9999.ATS.ATSForAP {
             // Convert the visible AP name to the in game id, where only these few are different
             itemName = GetIDFromWorkshopName(itemName);
             if(GameMB.Settings.ContainsBuilding(itemName)) {
-                if(GameMB.GameContentService.IsUnlocked(GameMB.Settings.GetBuilding(itemName))) {
-                    GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(itemName));
-                    ItemsForNews.Add((null, $"{itemName} received from AP!", $"{itemName} received. You can now build this blueprint in this and all future settlements."));
-                }
+                GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(itemName));
+                ItemsForNews.Add((null, $"{itemName} received from AP!", $"{itemName} received. You can now build this blueprint in this and all future settlements."));
                 return;
             }
 
