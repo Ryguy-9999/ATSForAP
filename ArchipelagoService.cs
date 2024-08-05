@@ -458,6 +458,17 @@ namespace Ryguy9999.ATS.ATSForAP {
 
             var locId = session.Locations.GetLocationIdFromName(Constants.AP_GAME_NAME, location);
             if (locId < 0) {
+                if (locationsAlreadySent.ContainsKey(locId)) {
+                    locationsAlreadySent[locId]++;
+                    if (locationsAlreadySent[locId] == 10) {
+                        Plugin.Log($"Silencing: {location}");
+                    } else if (locationsAlreadySent[locId] < 10) {
+                        Plugin.Log($"Location with unknown id: {location}");
+                    }
+                } else {
+                    locationsAlreadySent[locId] = 1;
+                    Plugin.Log($"Location with unknown id: {location}");
+                }
                 Plugin.Log($"Location with unknown id: {location}");
                 return false;
             }
@@ -519,7 +530,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             // Biome Victory
-            CheckLocation("Victory - " + GameMB.MetaStateService.GameConditions.biome);
+            CheckLocation("Victory - " + GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard"));
 
             // Sealed Forest (Goal) Victory
             if(GameMB.GameSealService.IsSealedBiome() && GameMB.GameSealService.IsSealCompleted()) {
@@ -696,8 +707,10 @@ namespace Ryguy9999.ATS.ATSForAP {
             // Convert the visible AP name to the in game id, where only these few are different
             itemName = GetIDFromWorkshopName(itemName);
             if(GameMB.Settings.ContainsBuilding(itemName)) {
-                GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(itemName));
-                ItemsForNews.Add((null, $"{itemName} received from AP!", $"{itemName} received. You can now build this blueprint in this and all future settlements."));
+                if(GameMB.GameContentService.IsUnlocked(GameMB.Settings.GetBuilding(itemName))) {
+                    GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(itemName));
+                    ItemsForNews.Add((null, $"{itemName} received from AP!", $"{itemName} received. You can now build this blueprint in this and all future settlements."));
+                }
                 return;
             }
 
