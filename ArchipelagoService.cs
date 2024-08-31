@@ -122,6 +122,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                 }
             }
 
+            Plugin.Log("Checking blueprint rando...");
             if (loginSuccess.SlotData.ContainsKey("blueprint_items")) {
                 TreatBlueprintsAsItems = (long)loginSuccess.SlotData["blueprint_items"] == 1;
             } else {
@@ -135,6 +136,8 @@ namespace Ryguy9999.ATS.ATSForAP {
                 Plugin.Log("Could not find rep_location_indices in SlotData, falling back to 1st and 10th Rep.");
                 ReputationLocationIndices = new List<int> { 1, 10 };
             }
+
+            Plugin.Log("Checking recipe rando...");
             if ((long)loginSuccess.SlotData["recipe_shuffle"] >= Constants.RECIPE_SHUFFLE_EXCLUDE_CRUDE_WS) {
                 if (loginSuccess.SlotData.ContainsKey("production_recipes")) {
                     Dictionary<string, List<List<JValue>>> recipeDict = (loginSuccess.SlotData["production_recipes"] as JObject).ToObject<Dictionary<string, List<List<JValue>>>>();
@@ -173,6 +176,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                 }
             };
 
+            Plugin.Log("Checking deathlink...");
             if (loginSuccess.SlotData.ContainsKey("deathlink")) {
                 DeathlinkState = (long)loginSuccess.SlotData["deathlink"];
             } else {
@@ -188,6 +192,8 @@ namespace Ryguy9999.ATS.ATSForAP {
                     }
                 };
             }
+
+            Plugin.Log("Connection to AP complete!");
         }
 
         public static bool HasReceivedItem(string item) {
@@ -507,16 +513,18 @@ namespace Ryguy9999.ATS.ATSForAP {
 
         private static string GetIDFromWorkshopName(string name) {
             return name
-                .Replace("Druids Hut", "Druid")
+                .Replace("Druid's Hut", "Druid")
                 .Replace("Flawless Druids Hut", "Flawless Druid")
-                .Replace("Alchemists Hut", "Alchemist Hut")
+                .Replace("Alchemist's Hut", "Alchemist Hut")
                 .Replace("Teahouse", "Tea House")
                 .Replace("Greenhouse", "Greenhouse Workshop")
                 .Replace("Leatherworker", "Leatherworks")
                 .Replace("Flawless Leatherworker", "Flawless Leatherworks")
                 .Replace("Clay Pit", "Clay Pit Workshop")
                 .Replace("Advanced Rain Collector", "Advanced Rain Catcher")
-                .Replace("Lumber Mill", "Lumbermill");
+                .Replace("Lumber Mill", "Lumbermill")
+                .Replace("Forester's Hut", "Grove")
+                .Replace("Small Farm", "SmallFarm");
         }
 
         private static void HandleOrderRewards(OrderState order) {
@@ -705,9 +713,9 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             // Convert the visible AP name to the in game id, where only these few are different
-            itemName = GetIDFromWorkshopName(itemName);
-            if(GameMB.Settings.ContainsBuilding(itemName)) {
-                GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(itemName));
+            string buildingID = GetIDFromWorkshopName(itemName);
+            if(GameMB.Settings.ContainsBuilding(buildingID)) {
+                GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(buildingID));
                 ItemsForNews.Add((null, $"{itemName} received from AP!", $"{itemName} received. You can now build this blueprint in this and all future settlements."));
                 return;
             }
