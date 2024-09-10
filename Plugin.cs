@@ -9,6 +9,7 @@ using System;
 using Eremite.Controller.Effects;
 using System.Reflection;
 using ATS_API.Helpers;
+using Eremite.Services;
 
 namespace Ryguy9999.ATS.ATSForAP
 {
@@ -27,14 +28,17 @@ namespace Ryguy9999.ATS.ATSForAP
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} loaded.");
         }
 
+        public static void Log(object o) {
+            Log(o.ToString());
+        }
+
         public static void Log(string s) {
             Instance.Logger.LogInfo(s);
         }
 
         [HarmonyPatch(typeof(MainController), nameof(MainController.OnServicesReady))]
         [HarmonyPostfix]
-        private static void HookMainControllerSetup()
-        { 
+        private static void HookMainControllerSetup() {
             // This method will run after game load (Roughly on entering the main menu)
             // At this point a lot of the game's data will be available.
             // Main entry point to access this data will be `Serviceable.Settings` or `MainController.Instance.Settings`

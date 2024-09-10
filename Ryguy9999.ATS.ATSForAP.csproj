@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Ryguy9999.ATS.ATSForAP</AssemblyName>
     <Description>AP Mod for Against The Storm - by Ryguy9999</Description>
-    <Version>0.4.8</Version>
+    <Version>0.5.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <StormPath>D:\\SteamLibrary\\steamapps\\common\\Against the Storm</StormPath>
@@ -380,11 +380,11 @@
 
   <Target Name="Deploy" AfterTargets="Build">
 		<ItemGroup>
-			<Assembly Include="$(OutputPath)\$(AssemblyName).dll" />
+      <Assembly Include="$(OutputPath)\$(AssemblyName).dll" />
       <Assets Include="$(OutputPath)\assets\*.*" />
 		</ItemGroup>
 
-		<Copy SourceFiles="@(Assembly)" DestinationFolder="$(BepInExPath)\BepInEx\plugins" />
+    <Copy SourceFiles="@(Assembly)" DestinationFolder="$(BepInExPath)\BepInEx\plugins" />
     <Copy SourceFiles="@(Assets)" DestinationFolder="$(BepInExPath)\BepInEx\plugins\assets\" />
     <Copy SourceFiles="$(OutputPath)\Archipelago.MultiClient.Net.dll" DestinationFolder="$(BepInExPath)\BepInEx\plugins" />
   </Target>

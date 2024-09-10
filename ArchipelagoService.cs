@@ -12,6 +12,7 @@ using Eremite.Model.Orders;
 using Eremite.Model.State;
 using Eremite.Services;
 using Eremite.Services.Monitors;
+using Eremite.View.UI;
 using Newtonsoft.Json.Linq;
 using QFSW.QC;
 using System;
@@ -37,10 +38,12 @@ namespace Ryguy9999.ATS.ATSForAP {
         private static News ApConnectionNews;
         private static List<int> ReputationLocationIndices = new List<int>();
 
-        public static bool TreatBlueprintsAsItems = false;
+        public static bool PreventNaturalBPSelection = false;
+        public static int RequiredSealTasks = 1;
+        public static bool RequiredGuardianParts = false;
 
 
-        /*
+        ///*
         // TODO DELETEME
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static void InitializeAPConnection() {
@@ -61,20 +64,16 @@ namespace Ryguy9999.ATS.ATSForAP {
 
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static void InitializeAPConnection([APUrlSuggestion] string url, string player, string password) {
-            // TODO  more trade locations. configure number of random ones like subnautica fish scans?
-            // TODO event decisions tag locations
-            // TODO  goal options, ie require multiple tasks per phase or Item macguffins
-            // TODO  add option to continue normal BP drafts in addition to Items
-            // TODO locations in sealed forest as well
+            // TODO  goal options, ie require multiple tasks per phase
+            // TODO    AND Item macguffins
+
+            // TODO fix: building receipt notifies news on every new settlement
 
             // TODO item gifting?
 
             // TODO food/service utopia locs?
             // TODO global resolve filler items?
             // TODO harder logic mode
-
-            // TODO check all 50 Resolve locations, some dont send?
-            // TODO repro .3.3 -> .4.x lizard 1st rep doesnt send unti 5th order
 
             if (session != null) {
                 DisconnectFromGame();
@@ -124,10 +123,19 @@ namespace Ryguy9999.ATS.ATSForAP {
 
             Plugin.Log("Checking blueprint rando...");
             if (loginSuccess.SlotData.ContainsKey("blueprint_items")) {
-                TreatBlueprintsAsItems = (long)loginSuccess.SlotData["blueprint_items"] == 1;
+                if ((long)loginSuccess.SlotData["blueprint_items"] == 1) {
+                    if (loginSuccess.SlotData.ContainsKey("continue_blueprints_for_reputation")) {
+                        PreventNaturalBPSelection = (long)loginSuccess.SlotData["continue_blueprints_for_reputation"] != 1;
+                    } else {
+                        Plugin.Log("Could not find continue_blueprints_for_reputation in SlotData, falling back to blueprint AP items only.");
+                        PreventNaturalBPSelection = true;
+                    }
+                } else {
+                    PreventNaturalBPSelection = false;
+                }
             } else {
                 Plugin.Log("Could not find blueprint_items in SlotData, falling back to vanilla blueprint behavior.");
-                TreatBlueprintsAsItems = false;
+                PreventNaturalBPSelection = false;
             }
 
             if (loginSuccess.SlotData.ContainsKey("rep_location_indices")) {
@@ -159,6 +167,21 @@ namespace Ryguy9999.ATS.ATSForAP {
                 }
             }
 
+            Plugin.Log("Checking final map settings...");
+            // TODO specified cast is invalid
+            if (loginSuccess.SlotData.ContainsKey("seal_items")) {
+                RequiredGuardianParts = (long)loginSuccess.SlotData["seal_items"] == 1;
+            } else {
+                Plugin.Log("Could not find seal_items in SlotData, falling back to false.");
+                RequiredGuardianParts = false;
+            }
+            if (loginSuccess.SlotData.ContainsKey("required_seal_tasks")) {
+                RequiredSealTasks = (int)(long)loginSuccess.SlotData["required_seal_tasks"];
+            } else {
+                Plugin.Log("Could not find required_seal_tasks in SlotData, falling back to 1.");
+                RequiredSealTasks = 1;
+            }
+
             session.Items.ItemReceived += (receivedItemsHelper) => {
                 ItemInfo item = session.Items.DequeueItem();
                 if(GameMB.IsGameActive && item.ItemName != null) {
@@ -170,10 +193,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             session.MessageLog.OnMessageReceived += (message) => {
-                var console = GameObject.FindObjectOfType<QuantumConsole>();
-                if(console != null) {
-                    console.LogToConsole(message.ToString());
-                }
+                Plugin.Log("[AP]    " + message);
             };
 
             Plugin.Log("Checking deathlink...");
@@ -194,6 +214,14 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             Plugin.Log("Connection to AP complete!");
+        }
+
+        public static bool HasReceivedGuardianPart(string part) {
+            if(!RequiredGuardianParts) {
+                return true;
+            }
+
+            return session.Items.AllItemsReceived.Any(itemInfo => itemInfo.ItemDisplayName == part);
         }
 
         public static bool HasReceivedItem(string item) {
@@ -460,6 +488,7 @@ namespace Ryguy9999.ATS.ATSForAP {
         public static bool CheckLocation(string location) {
             if(session == null) {
                 LocationQueue.Enqueue(location);
+                return false;
             }
 
             var locId = session.Locations.GetLocationIdFromName(Constants.AP_GAME_NAME, location);
@@ -475,7 +504,6 @@ namespace Ryguy9999.ATS.ATSForAP {
                     locationsAlreadySent[locId] = 1;
                     Plugin.Log($"Location with unknown id: {location}");
                 }
-                Plugin.Log($"Location with unknown id: {location}");
                 return false;
             }
             if(session.Locations.AllLocationsChecked.Contains(locId)) {
@@ -494,7 +522,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             Plugin.Log($"Sending AP Location: {location}");
-            session.Locations.CompleteLocationChecks(locId);
+            session.Locations.CompleteLocationChecksAsync(locId);
             return true;
         }
 
@@ -570,6 +598,17 @@ namespace Ryguy9999.ATS.ATSForAP {
             if(relic.model.dangerLevel == DangerLevel.Forbidden) {
                 CheckLocation("Complete a Forbidden Glade Event");
             }
+
+            string decisionTag = relic.GetCurrentDecision()?.decisionTag?.displayName?.Text;
+            if (decisionTag == "Corruption") {
+                CheckLocation("Complete a Glade Event with a Corruption tag");
+            }
+            if (decisionTag == "Empathy") {
+                CheckLocation("Complete a Glade Event with an Empathy tag");
+            }
+            if (decisionTag == "Loyalty") {
+                CheckLocation("Complete a Glade Event with a Loyalty tag");
+            }
         }
 
         private static void HandleSlowUpdate() {
@@ -599,7 +638,7 @@ namespace Ryguy9999.ATS.ATSForAP {
 
             foreach (int repIndex in ReputationLocationIndices) {
                 if (repGained >= repIndex) {
-                    var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard");
+                    var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard").Replace("Sealed Biome", "Sealed Forest");
                     CheckLocation($"{repIndex}{GetOrdinalSuffix(repIndex)} Reputation - {biome}");
                 }
             }
@@ -698,6 +737,13 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return;
             }
 
+            // Guardian Part
+            if(itemName.StartsWith("Guardian ")) {
+                // No need to handle reception, we just check for it when opening the seal menu
+                return;
+            }
+
+            // Filler
             Match match = new Regex(@"(\d+) Starting (.+)").Match(itemName);
             if(match.Success) {
                 var fillerQty = Int32.Parse(match.Groups[1].ToString());
@@ -712,6 +758,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return;
             }
 
+            // Blueprint
             // Convert the visible AP name to the in game id, where only these few are different
             string buildingID = GetIDFromWorkshopName(itemName);
             if(GameMB.Settings.ContainsBuilding(buildingID)) {
@@ -720,6 +767,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return;
             }
 
+            // Good unlock
             if (Constants.ITEM_DICT.ContainsKey(itemName)) {
                 string itemId = Constants.ITEM_DICT[itemName].ToName();
                 if (!HasReceivedItem(itemId)) {

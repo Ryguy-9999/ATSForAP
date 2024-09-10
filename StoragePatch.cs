@@ -2,6 +2,7 @@
 using Eremite;
 using Eremite.Buildings;
 using Eremite.Buildings.UI;
+using Eremite.Buildings.UI.Seals;
 using Eremite.Model;
 using Eremite.Model.State;
 using Eremite.Services;
@@ -12,6 +13,7 @@ using Eremite.WorldMap.UI.CustomGames;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ryguy9999.ATS.ATSForAP {
     class StoragePatch {
@@ -82,7 +84,7 @@ namespace Ryguy9999.ATS.ATSForAP {
         [HarmonyPatch(new Type[] { typeof(int) })]
         private static void ReputationBlueprintCounterPrefix(ref int amount) {
             // Prevent natural blueprint selection when receiving them from AP
-            if (ArchipelagoService.TreatBlueprintsAsItems) {
+            if (ArchipelagoService.PreventNaturalBPSelection) {
                 amount = GameMB.EffectsService.GetWildcardPicksLeft();
             }
         }
@@ -112,15 +114,61 @@ namespace Ryguy9999.ATS.ATSForAP {
         [HarmonyPatch(typeof(CustomGameTradeTownsPanel), nameof(CustomGameTradeTownsPanel.PrepareAll))]
         private static void CustomGameTradeTownSetUpPostfix(CustomGameTradeTownsPanel __instance) {
             // Start the first 4 trade towns as selected, as that's probably the better default
-            Plugin.Log(__instance.ToString());
-            Plugin.Log(__instance.picked.ToString());
-            Plugin.Log(__instance.picked.Count.ToString());
-            Plugin.Log(__instance.all.ToString());
-            Plugin.Log(__instance.all.Count.ToString());
             for (int i = 0; i < 4 && i < __instance.all.Count; i++) {
-                Plugin.Log(__instance.all[i].faction);
                 __instance.picked.Add(__instance.all[i]);
             }
+        }
+
+        private static string GetRelevantPart() {
+            SealState sealState = Serviceable.StateService.Buildings.seals.Count > 0 ? Serviceable.StateService.Buildings.seals.First<SealState>() : null;
+            int currentSealLevel = 0;
+            while (currentSealLevel < sealState.kits.Length && sealState.kits[currentSealLevel].completedIndex >= 0) {
+                currentSealLevel += 1;
+            }
+            switch (currentSealLevel) {
+            case 0:
+                return "Guardian Heart";
+            case 1:
+                return "Guardian Blood";
+            case 2:
+                return "Guardian Feathers";
+            case 3:
+                return "Guardian Essence";
+            }
+            return "";
+        }
+
+        private static bool HasCompletedEnoughOrders() {
+            SealState sealState = Serviceable.StateService.Buildings.seals.Count > 0 ? Serviceable.StateService.Buildings.seals.First<SealState>() : null;
+            int currentSealLevel = 0;
+            while (currentSealLevel < sealState.kits.Length && sealState.kits[currentSealLevel].completedIndex >= 0) {
+                currentSealLevel += 1;
+            }
+            int completedOrders = 0;
+            for (int i = 0; i < sealState.kits[currentSealLevel].orders.Length; i++) {
+                if (GameMB.OrdersService.CanComplete(sealState.kits[currentSealLevel].orders[i], GameMB.Settings.GetOrder(sealState.kits[currentSealLevel].orders[i].model))) {
+                    completedOrders++;
+                }
+            }
+            return completedOrders >= ArchipelagoService.RequiredSealTasks;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(PartSlot), nameof(PartSlot.StartButtons))]
+        private static void PartSlotButtonsPostfix(PartSlot __instance) {
+            __instance.completeButton.OnFailedClick.Subscribe(() => {
+                if(!ArchipelagoService.HasReceivedGuardianPart(GetRelevantPart())) {
+                    GameMB.NewsService.PublishNews("Can't complete seal part!", $"\"Seal Parts\" option is on for this AP slot, meaning you need to receive \"{GetRelevantPart()}\" before you can complete this phase of the Seal.", Eremite.Services.Monitors.AlertSeverity.Warning);
+                } else if(!HasCompletedEnoughOrders()) {
+                    GameMB.NewsService.PublishNews("Can't complete seal part!", $"\"Required Seal Tasks\" is set to {ArchipelagoService.RequiredSealTasks} for this AP slot, meaning you need to fulfill the requirements for that many tasks before you can complete this phase of the Seal.", Eremite.Services.Monitors.AlertSeverity.Warning);
+                }
+            });
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(PartSlot), nameof(PartSlot.UpdateButton))]
+        private static void PartSlotUpdateButtonPostfix(PartSlot __instance) {
+            __instance.completeButton.CanInteract = __instance.completeButton.CanInteract && HasCompletedEnoughOrders() && (!ArchipelagoService.RequiredGuardianParts || ArchipelagoService.HasReceivedGuardianPart(GetRelevantPart()));
         }
     }
 }
