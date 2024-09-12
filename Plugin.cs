@@ -76,11 +76,11 @@ namespace Ryguy9999.ATS.ATSForAP
                 } else if (good.Name == GoodsTypes.Food_Raw_Berries.ToName()) {
                     good.amount = 28;
                 } else if (good.Name == GoodsTypes.Mat_Processed_Planks.ToName()) {
-                    good.amount = 7;
+                    good.amount = 8;
                 } else if (good.Name == GoodsTypes.Mat_Processed_Fabric.ToName()) {
-                    good.amount = 7;
+                    good.amount = 8;
                 } else if (good.Name == GoodsTypes.Mat_Processed_Bricks.ToName()) {
-                    good.amount = 7;
+                    good.amount = 8;
                 }
             }
         }

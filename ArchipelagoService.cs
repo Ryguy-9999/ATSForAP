@@ -43,7 +43,7 @@ namespace Ryguy9999.ATS.ATSForAP {
         public static bool RequiredGuardianParts = false;
 
 
-        ///*
+        /*
         // TODO DELETEME
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static void InitializeAPConnection() {
@@ -64,9 +64,6 @@ namespace Ryguy9999.ATS.ATSForAP {
 
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static void InitializeAPConnection([APUrlSuggestion] string url, string player, string password) {
-            // TODO  goal options, ie require multiple tasks per phase
-            // TODO    AND Item macguffins
-
             // TODO fix: building receipt notifies news on every new settlement
 
             // TODO item gifting?
@@ -644,37 +641,37 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             // 50 Resolve check
-            if (GameMB.RacesService.HasRace("Human") && GameMB.ResolveService.GetResolveFor("Human") >= 50) {
+            if (GameMB.RacesService.HasRace("Human") && GameMB.ResolveService.GetResolveFor("Human") >= 49.5) {
                 CheckLocation("50 Resolve - Humans");
             }
-            if (GameMB.RacesService.HasRace("Lizard") && GameMB.ResolveService.GetResolveFor("Lizard") >= 50) {
+            if (GameMB.RacesService.HasRace("Lizard") && GameMB.ResolveService.GetResolveFor("Lizard") >= 49.5) {
                 CheckLocation("50 Resolve - Lizards");
             }
-            if (GameMB.RacesService.HasRace("Beaver") && GameMB.ResolveService.GetResolveFor("Beaver") >= 50) {
+            if (GameMB.RacesService.HasRace("Beaver") && GameMB.ResolveService.GetResolveFor("Beaver") >= 49.5) {
                 CheckLocation("50 Resolve - Beavers");
             }
-            if (GameMB.RacesService.HasRace("Harpy") && GameMB.ResolveService.GetResolveFor("Harpy") >= 50) {
+            if (GameMB.RacesService.HasRace("Harpy") && GameMB.ResolveService.GetResolveFor("Harpy") >= 49.5) {
                 CheckLocation("50 Resolve - Harpies");
             }
-            if (GameMB.RacesService.HasRace("Foxes") && GameMB.ResolveService.GetResolveFor("Foxes") >= 50) {
+            if (GameMB.RacesService.HasRace("Foxes") && GameMB.ResolveService.GetResolveFor("Foxes") >= 49.5) {
                 CheckLocation("50 Resolve - Foxes");
             }
 
-            // 30 Housed Villagers
-            if (GameMB.RacesService.HasRace("Human") && GetFullyUpgradedHousedAmount("Human") >= 30) {
-                CheckLocation("Have 30 Villagers in fully upgraded Housing - Humans");
+            // 20 Housed Villagers
+            if (GameMB.RacesService.HasRace("Human") && GetFullyUpgradedHousedAmount("Human") >= 20) {
+                CheckLocation("Have 20 Villagers in fully upgraded Housing - Humans");
             }
-            if (GameMB.RacesService.HasRace("Beaver") && GetFullyUpgradedHousedAmount("Beaver") >= 30) {
-                CheckLocation("Have 30 Villagers in fully upgraded Housing - Beavers");
+            if (GameMB.RacesService.HasRace("Beaver") && GetFullyUpgradedHousedAmount("Beaver") >= 20) {
+                CheckLocation("Have 20 Villagers in fully upgraded Housing - Beavers");
             }
-            if (GameMB.RacesService.HasRace("Lizard") && GetFullyUpgradedHousedAmount("Lizard") >= 30) {
-                CheckLocation("Have 30 Villagers in fully upgraded Housing - Lizards");
+            if (GameMB.RacesService.HasRace("Lizard") && GetFullyUpgradedHousedAmount("Lizard") >= 20) {
+                CheckLocation("Have 20 Villagers in fully upgraded Housing - Lizards");
             }
-            if (GameMB.RacesService.HasRace("Harpy") && GetFullyUpgradedHousedAmount("Harpy") >= 30) {
-                CheckLocation("Have 30 Villagers in fully upgraded Housing - Harpies");
+            if (GameMB.RacesService.HasRace("Harpy") && GetFullyUpgradedHousedAmount("Harpy") >= 20) {
+                CheckLocation("Have 20 Villagers in fully upgraded Housing - Harpies");
             }
-            if (GameMB.RacesService.HasRace("Foxes") && GetFullyUpgradedHousedAmount("Foxes") >= 30) {
-                CheckLocation("Have 30 Villagers in fully upgraded Housing - Foxes");
+            if (GameMB.RacesService.HasRace("Foxes") && GetFullyUpgradedHousedAmount("Foxes") >= 20) {
+                CheckLocation("Have 20 Villagers in fully upgraded Housing - Foxes");
             }
 
             // Handle filler villagers received mid game in a game thread, as ItemReceived causes crashes
