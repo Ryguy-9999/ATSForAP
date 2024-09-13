@@ -64,8 +64,6 @@ namespace Ryguy9999.ATS.ATSForAP {
 
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static void InitializeAPConnection([APUrlSuggestion] string url, string player, string password) {
-            // TODO fix: building receipt notifies news on every new settlement
-
             // TODO item gifting?
 
             // TODO food/service utopia locs?
@@ -165,7 +163,6 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             Plugin.Log("Checking final map settings...");
-            // TODO specified cast is invalid
             if (loginSuccess.SlotData.ContainsKey("seal_items")) {
                 RequiredGuardianParts = (long)loginSuccess.SlotData["seal_items"] == 1;
             } else {
@@ -296,14 +293,15 @@ namespace Ryguy9999.ATS.ATSForAP {
                             Plugin.Log("Could not find filler item: " + fillerType);
                         }
                         GameMB.StorageService.Store(new Good(Constants.ITEM_DICT[fillerType].ToName(), fillerQty), StorageOperationType.Other);
-                        ItemsForNews.Add((GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[fillerType].ToName()), $"{fillerQty} {fillerType} received from AP!", $"{fillerType} received. You will also receive this bonus in all future settlements."));
                     }
 
                     continue;
                 }
 
-                // If it wasn't in ITEM_DICT and wasn't .*Starting.* filler, it's a blueprint
-                HandleItemReceived(item.ItemName);
+                string buildingID = GetIDFromWorkshopName(item.ItemName);
+                if (GameMB.Settings.ContainsBuilding(buildingID)) {
+                    GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(buildingID));
+                }
             }
 
             foreach (KeyValuePair<string, GoodsTypes> pair in Constants.ITEM_DICT) {

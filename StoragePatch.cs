@@ -55,6 +55,15 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
         }
 
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(Farm), nameof(Farm.SetUp))]
+        [HarmonyPatch(new Type[] { typeof(FarmModel), typeof(FarmState) })]
+        private static void FarmSetUpPostfix(Farm __instance, FarmModel model, FarmState state) {
+            foreach(var recipe in __instance.state.recipes) {
+                recipe.active = recipe.active && ArchipelagoService.HasReceivedItem(GameMB.Settings.GetRecipe(recipe.model).GetProducedGood());
+            }
+        }
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(TradeRoutesGenerator), nameof(TradeRoutesGenerator.RegenerateOffersFor))]
         [HarmonyPatch(new Type[] { typeof(TradeTownState) })]
