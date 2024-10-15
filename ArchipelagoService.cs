@@ -38,24 +38,26 @@ namespace Ryguy9999.ATS.ATSForAP {
         private static News ApConnectionNews;
         private static List<int> ReputationLocationIndices = new List<int>();
 
+        public static bool EnabledDLC = false;
         public static bool PreventNaturalBPSelection = false;
         public static int RequiredSealTasks = 1;
         public static bool RequiredGuardianParts = false;
+        public static Dictionary<string, ScoutedItemInfo> LocationScouts = new Dictionary<string, ScoutedItemInfo>();
 
-
-        /*
-        // TODO DELETEME
-        [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
-        public static void InitializeAPConnection() {
-            InitializeAPConnection("localhost:38281", "RyanATS", null);
-        }
-        // TODO DELETEME
         [Command("ap.sendLocation", "For debugging purposes. Sends a location.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static void SendLocation(string location) {
             CheckLocation(location);
         }
-        //*/
 
+        [Command("ap.c", "Connects to Archipelago server, using most recently used url:port and slotName. Still takes optional password.", Platform.AllPlatforms, MonoTargetType.Single)]
+        public static void InitializeAPConnectionShortcut() {
+            InitializeAPConnection(PlayerPrefs.GetString("ap.url"), PlayerPrefs.GetString("ap.slotName"), null);
+        }
+
+        [Command("ap.c", "Connects to Archipelago server, using most recently used url:port and slotName. Still takes optional password.", Platform.AllPlatforms, MonoTargetType.Single)]
+        public static void InitializeAPConnectionShortcut(string password) {
+            InitializeAPConnection(PlayerPrefs.GetString("ap.url"), PlayerPrefs.GetString("ap.slotName"), password);
+        }
 
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static void InitializeAPConnection([APUrlSuggestion] string url, string player) {
@@ -66,9 +68,20 @@ namespace Ryguy9999.ATS.ATSForAP {
         public static void InitializeAPConnection([APUrlSuggestion] string url, string player, string password) {
             // TODO item gifting?
 
+            // TODO biome specific locations: grove expeditions, archeology, mega nodes??
+
+            // TODO exclude MSP/PoP
+
             // TODO food/service utopia locs?
             // TODO global resolve filler items?
             // TODO harder logic mode
+
+            // apworld
+            // TODO revert 7->8 building mats and give another pass at building mat logic, should be just Trade
+            // TODO remove start inventory from item pool
+            // TODO arbitrary filler function
+
+            // TODO alert on one idle worker instead of all?
 
             if (session != null) {
                 DisconnectFromGame();
@@ -98,6 +111,9 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return;
             }
             LoginSuccessful loginSuccess = loginResult as LoginSuccessful;
+
+            PlayerPrefs.SetString("ap.url", url);
+            PlayerPrefs.SetString("ap.slotName", player);
 
             if(GameMB.IsGameActive) {
                 SyncGameStateToAP();
@@ -162,6 +178,14 @@ namespace Ryguy9999.ATS.ATSForAP {
                 }
             }
 
+            Plugin.Log("Checking DLC settings...");
+            if (loginSuccess.SlotData.ContainsKey("enable_dlc")) {
+                EnabledDLC = (long)loginSuccess.SlotData["enable_dlc"] == 1;
+            } else {
+                Plugin.Log("Could not find enable_dlc in SlotData, falling back to false.");
+                EnabledDLC = false;
+            }
+
             Plugin.Log("Checking final map settings...");
             if (loginSuccess.SlotData.ContainsKey("seal_items")) {
                 RequiredGuardianParts = (long)loginSuccess.SlotData["seal_items"] == 1;
@@ -207,6 +231,25 @@ namespace Ryguy9999.ATS.ATSForAP {
                 };
             }
 
+            Plugin.Log("Scouting trade locations...");
+            var tradeLocationIds = new List<long>();
+            foreach (var loc in session.Locations.AllMissingLocations) {
+                var location = session.Locations.GetLocationNameFromId(loc);
+
+                Match match = new Regex(@"Trade - (\d+) (.+)").Match(location);
+                if (match.Success) {
+                    tradeLocationIds.Add(loc);
+                }
+            }
+
+            session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, tradeLocationIds.ToArray()).ContinueWith(locationInfoPacket => {
+                Plugin.Log("Interpreting trade location scout response...");
+                Plugin.Logify(locationInfoPacket);
+                foreach(var scout in locationInfoPacket.Result) {
+                    LocationScouts.Add(scout.Value.LocationDisplayName, scout.Value);
+                }
+            });
+
             Plugin.Log("Connection to AP complete!");
         }
 
@@ -230,7 +273,6 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return;
             }
 
-            // TODO replace Amber payment with location scout
             if (!GameMB.StateService.Trade.tradeTowns.Any(town => town.id == Constants.TRADE_TOWN_ID)) {
                 var offers = new List<TownOfferState>();
                 foreach (var loc in session.Locations.AllMissingLocations) {
@@ -240,9 +282,6 @@ namespace Ryguy9999.ATS.ATSForAP {
                     if (match.Success) {
                         int tradeQty = Int32.Parse(match.Groups[1].ToString());
                         string tradeItem = match.Groups[2].ToString();
-
-                        // v0.3.3 apworld -> v0.4.x mod compatibility
-                        tradeItem = tradeItem.Replace("Packs of ", "Pack of ");
 
                         if (Constants.ITEM_DICT.ContainsKey(tradeItem)) {
                             tradeItem = Constants.ITEM_DICT[tradeItem].ToName();
@@ -267,9 +306,6 @@ namespace Ryguy9999.ATS.ATSForAP {
                     townName = "Archipelago",
                     hasStaticName = true,
                     biome = "Royal Woodlands",
-                    // TODO look into custom faction/biome??
-                    //faction = null,
-                    //bonusRoutes = 0,
                     isMaxStanding = true,
                     offers = offers
                 });
@@ -346,7 +382,6 @@ namespace Ryguy9999.ATS.ATSForAP {
             GameSubscriptions.Add(GameMB.GameBlackboardService.OnRelicResolved.Subscribe(new Action<Relic>(HandleRelicResolve)));
             GameSubscriptions.Add(GameMB.RXService.Interval(1, true).Subscribe(new Action(HandleSlowUpdate)));
             GameSubscriptions.Add(GameMB.TradeRoutesService.OnStandingLeveledUp.Subscribe(new Action<TradeTownState>(HandleStandingLevelUp)));
-            // TODO location routes will trigger in game route completions. Minor unintended behavior
             GameSubscriptions.Add(GameMB.TradeRoutesService.OnRouteCollected.Subscribe(new Action<RouteState>(HandleTradeRouteCollect)));
         }
 
@@ -391,10 +426,6 @@ namespace Ryguy9999.ATS.ATSForAP {
             if(session != null) {
                 session.Socket.DisconnectAsync();
                 session = null;
-            }
-
-            foreach(IDisposable disposable in GameSubscriptions) {
-                disposable.Dispose();
             }
         }
 
@@ -449,7 +480,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             foreach (var building in recipeDict) {
-                if(!GameMB.Settings.ContainsBuilding(GetIDFromWorkshopName(building.Key))) {
+                if (!GameMB.Settings.ContainsBuilding(GetIDFromWorkshopName(building.Key))) {
                     Plugin.Log("Unknown building key from SlotData: " + building.Key);
                     continue;
                 }
@@ -462,6 +493,13 @@ namespace Ryguy9999.ATS.ATSForAP {
                 var i = 0;
                 foreach(var recipe in building.Value) {
                     var recipeModelIndex = recipeList.FindIndex(r => r.GetProducedGood() == Constants.ITEM_DICT[recipe[0].ToObject<string>()].ToName() && r.grade.level == recipe[1].ToObject<int>());
+
+                    if(recipeModelIndex < 0) {
+                        Plugin.Log("========================================================================");
+                        Plugin.Log("ERROR: recipeModelIndex was < 0. This probably means the apworld does not have the correct recipe definitions.");
+                        Plugin.Log("========================================================================");
+                        return;
+                    }
 
                     model.recipes[i] = recipeList[recipeModelIndex];
                     recipeList.RemoveAt(recipeModelIndex);
@@ -516,7 +554,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return false;
             }
 
-            Plugin.Log($"Sending AP Location: {location}");
+            Plugin.Log($"Sending AP Location: {location} (id: {locId})");
             session.Locations.CompleteLocationChecksAsync(locId);
             return true;
         }
@@ -561,7 +599,10 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             // Biome Victory
-            CheckLocation("Victory - " + GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard"));
+            var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard").Replace("Bay", "Coastal Grove");
+            if(EnabledDLC || biome != "Coastal Grove") {
+                CheckLocation("Victory - " + biome);
+            }
 
             // Sealed Forest (Goal) Victory
             if(GameMB.GameSealService.IsSealedBiome() && GameMB.GameSealService.IsSealCompleted()) {
@@ -627,14 +668,18 @@ namespace Ryguy9999.ATS.ATSForAP {
             if (GameMB.RacesService.HasRace("Foxes") && GameMB.ResolveService.GetReputationGainFor("Foxes") >= 1) {
                 CheckLocation("First Reputation through Resolve - Foxes");
             }
+            if (EnabledDLC && GameMB.RacesService.HasRace("Frog") && GameMB.ResolveService.GetReputationGainFor("Frog") >= 1) {
+                CheckLocation("First Reputation through Resolve - Frogs");
+            }
 
             // Overall Reputation for biome
             var repGained = GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Order) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Other) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Relics) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Resolve);
-
-            foreach (int repIndex in ReputationLocationIndices) {
-                if (repGained >= repIndex) {
-                    var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard").Replace("Sealed Biome", "Sealed Forest");
-                    CheckLocation($"{repIndex}{GetOrdinalSuffix(repIndex)} Reputation - {biome}");
+            var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard").Replace("Bay", "Coastal Grove").Replace("Sealed Biome", "Sealed Forest");
+            if (EnabledDLC || biome != "Coastal Grove") {
+                foreach (int repIndex in ReputationLocationIndices) {
+                    if (repGained >= repIndex) {
+                        CheckLocation($"{repIndex}{GetOrdinalSuffix(repIndex)} Reputation - {biome}");
+                    }
                 }
             }
 
@@ -654,6 +699,9 @@ namespace Ryguy9999.ATS.ATSForAP {
             if (GameMB.RacesService.HasRace("Foxes") && GameMB.ResolveService.GetResolveFor("Foxes") >= 49.5) {
                 CheckLocation("50 Resolve - Foxes");
             }
+            if (EnabledDLC && GameMB.RacesService.HasRace("Frog") && GameMB.ResolveService.GetResolveFor("Frog") >= 49.5) {
+                CheckLocation("50 Resolve - Frogs");
+            }
 
             // 20 Housed Villagers
             if (GameMB.RacesService.HasRace("Human") && GetFullyUpgradedHousedAmount("Human") >= 20) {
@@ -670,6 +718,9 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
             if (GameMB.RacesService.HasRace("Foxes") && GetFullyUpgradedHousedAmount("Foxes") >= 20) {
                 CheckLocation("Have 20 Villagers in fully upgraded Housing - Foxes");
+            }
+            if (EnabledDLC && GameMB.RacesService.HasRace("Frog") && GetFullyUpgradedHousedAmount("Frog") >= 20) {
+                CheckLocation("Have 20 Villagers in fully upgraded Housing - Frog");
             }
 
             // Handle filler villagers received mid game in a game thread, as ItemReceived causes crashes

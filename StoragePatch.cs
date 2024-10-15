@@ -1,4 +1,6 @@
-﻿using ATS_API.Helpers;
+﻿using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Models;
+using ATS_API.Helpers;
 using Eremite;
 using Eremite.Buildings;
 using Eremite.Buildings.UI;
@@ -9,11 +11,15 @@ using Eremite.Services;
 using Eremite.View.HUD;
 using Eremite.View.HUD.Reputation;
 using Eremite.View.HUD.TradeRoutes;
+using Eremite.View.Menu;
 using Eremite.WorldMap.UI.CustomGames;
 using HarmonyLib;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace Ryguy9999.ATS.ATSForAP {
     class StoragePatch {
@@ -178,6 +184,95 @@ namespace Ryguy9999.ATS.ATSForAP {
         [HarmonyPatch(typeof(PartSlot), nameof(PartSlot.UpdateButton))]
         private static void PartSlotUpdateButtonPostfix(PartSlot __instance) {
             __instance.completeButton.CanInteract = __instance.completeButton.CanInteract && HasCompletedEnoughOrders() && (!ArchipelagoService.RequiredGuardianParts || ArchipelagoService.HasReceivedGuardianPart(GetRelevantPart()));
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(VersionText), nameof(VersionText.Start))]
+        private static void VersionTextStartPostfix(VersionText __instance) {
+            __instance.text.text += " + APv" + PluginInfo.PLUGIN_VERSION;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TownOfferSlot), nameof(TownOfferSlot.SetUpSlots))]
+        private static bool SetUpTownOfferSlotPostfix(TownOfferSlot __instance) {
+            string scoutedKey = ArchipelagoService.LocationScouts.Keys.FirstOrDefault(scout => {
+                Match match = new Regex(@"Trade - (\d+) (.+)").Match(scout);
+                int tradeQty = Int32.Parse(match.Groups[1].ToString());
+                string tradeItem = match.Groups[2].ToString();
+                
+                if (Constants.ITEM_DICT.ContainsKey(tradeItem)) {
+                    tradeItem = Constants.ITEM_DICT[tradeItem].ToName();
+                } else if (tradeItem.Contains("Water")) {
+                    tradeItem = "[Water] " + tradeItem;
+                }
+
+                return __instance.state.good.name == tradeItem && __instance.state.good.amount == tradeQty;
+            });
+            if (__instance.state.townId == Constants.TRADE_TOWN_ID && scoutedKey != null) {
+                ScoutedItemInfo scoutInfo = ArchipelagoService.LocationScouts[scoutedKey];
+                var playerName = scoutInfo.Player.Alias;
+                var itemScouted = scoutInfo.ItemDisplayName;
+                var itemType = scoutInfo.Flags == ItemFlags.Trap ? "trap" : scoutInfo.Flags == ItemFlags.NeverExclude ? "useful" : scoutInfo.Flags == ItemFlags.Advancement ? "progression" : "filler";
+
+                __instance.good.SetUp(GameMB.TradeRoutesService.GetFullGood(__instance.state));
+                __instance.price.SetUp(new Good($"{Constants.SCOUT_STRING_PREFIX}||{itemType}||{itemScouted}||{playerName}", 0));
+                __instance.fuel.SetUp(GameMB.TradeRoutesService.GetFullFuel(__instance.state));
+                return false;
+            }
+
+            return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GoodSlot), nameof(GoodSlot.SetUpIcon))]
+        private static bool SetUpSlotIconPrefix(GoodSlot __instance) {
+            if (__instance.good.name.StartsWith(Constants.SCOUT_STRING_PREFIX)) {
+                __instance.icon.sprite = TextureHelper.GetImageAsSprite("ap-icon.png", TextureHelper.SpriteType.EffectIcon);
+                return false;
+            }
+
+            return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GoodSlot), nameof(GoodSlot.SetUpCounter))]
+        private static bool SetUpSlotCounterPrefix(GoodSlot __instance) {
+            if (__instance.good.name.StartsWith(Constants.SCOUT_STRING_PREFIX)) {
+                __instance.counter.transform.parent.SetActive(false);
+                return false;
+            }
+
+            return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GoodTooltip), nameof(GoodTooltip.Show))]
+        [HarmonyPatch(new Type[] { typeof(RectTransform), typeof(TooltipSettings), typeof(Good), typeof(GoodTooltipMode), typeof(string) })]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Method Declaration", "Harmony003:Harmony non-ref patch parameters modified", Justification = "In fact not modifying")]
+        private static bool GoodTooltipShowPrefix(GoodTooltip __instance, RectTransform target, TooltipSettings settings, Good good, GoodTooltipMode mode, string footnote = null) {
+            if (good.name.StartsWith(Constants.SCOUT_STRING_PREFIX)) {
+                Match match = new Regex(@"^\|\|(.*)\|\|(.*)\|\|(.*)$").Match(good.name.Substring(Constants.SCOUT_STRING_PREFIX.Length));
+                var playerName = match.Groups[3].ToString();
+                var itemScouted = match.Groups[2].ToString();
+                var itemType = match.Groups[1].ToString();
+
+                //__instance.model = model;
+                //__instance.amount = amount;
+                __instance.mode = mode;
+                __instance.nameText.text = $"{playerName}'s {itemScouted}";
+                __instance.descText.text = $"You can trade for {playerName}'s {itemScouted}! {itemType.Replace("trap", "They might not be too happy about it though...").Replace("filler", "It's uncertain how much they'll use it though.").Replace("useful", "They'll probably get some use out of this.").Replace("progression", "It seems pretty important to them!")}";
+                __instance.labelText.text = "Archipelago Item";
+                __instance.storageParent.SetActive(false);
+                if (__instance.icon != null) {
+                    __instance.icon.sprite = TextureHelper.GetImageAsSprite("ap-icon.png", TextureHelper.SpriteType.EffectIcon); ;
+                }
+                __instance.footnoteParent.SetActive(false);
+                __instance.AnimateShow(target, settings);
+
+                return false;
+            }
+
+            return true;
         }
     }
 }

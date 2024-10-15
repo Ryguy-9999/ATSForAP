@@ -11,13 +11,16 @@ namespace Ryguy9999.ATS.ATSForAP {
             ["Mushrooms"] = GoodsTypes.Food_Raw_Mushrooms,
             ["Roots"] = GoodsTypes.Food_Raw_Roots,
             ["Vegetables"] = GoodsTypes.Food_Raw_Vegetables,
+            ["Fish"] = GoodsTypes.Food_Raw_Fish,
             ["Biscuits"] = GoodsTypes.Food_Processed_Biscuits,
             ["Jerky"] = GoodsTypes.Food_Processed_Jerky,
             ["Pickled Goods"] = GoodsTypes.Food_Processed_Pickled_Goods,
             ["Pie"] = GoodsTypes.Food_Processed_Pie,
             ["Porridge"] = GoodsTypes.Food_Processed_Porridge,
             ["Skewers"] = GoodsTypes.Food_Processed_Skewers,
+            ["Paste"] = GoodsTypes.Food_Processed_Paste,
             ["Coats"] = GoodsTypes.Needs_Coats,
+            ["Boots"] = GoodsTypes.Needs_Boots,
             ["Bricks"] = GoodsTypes.Mat_Processed_Bricks,
             ["Fabric"] = GoodsTypes.Mat_Processed_Fabric,
             ["Planks"] = GoodsTypes.Mat_Processed_Planks,
@@ -32,18 +35,20 @@ namespace Ryguy9999.ATS.ATSForAP {
             ["Wine"] = GoodsTypes.Needs_Wine,
             ["Clay"] = GoodsTypes.Mat_Raw_Clay,
             ["Copper Ore"] = GoodsTypes.Metal_Copper_Ore,
+            ["Scales"] = GoodsTypes.Mat_Raw_Scales,
             ["Crystallized Dew"] = GoodsTypes.Metal_Crystalized_Dew,
             ["Grain"] = GoodsTypes.Food_Raw_Grain,
             ["Herbs"] = GoodsTypes.Food_Raw_Herbs,
             ["Leather"] = GoodsTypes.Mat_Raw_Leather,
             ["Plant Fiber"] = GoodsTypes.Mat_Raw_Plant_Fibre,
+            ["Algae"] = GoodsTypes.Mat_Raw_Algae,
             ["Reeds"] = GoodsTypes.Mat_Raw_Reeds,
             ["Resin"] = GoodsTypes.Mat_Raw_Resin,
             ["Stone"] = GoodsTypes.Mat_Raw_Stone,
             ["Barrels"] = GoodsTypes.Vessel_Barrels,
             ["Copper Bars"] = GoodsTypes.Metal_Copper_Bar,
             ["Flour"] = GoodsTypes.Crafting_Flour,
-            ["Pigment"] = GoodsTypes.Crafting_Pigment,
+            ["Dye"] = GoodsTypes.Crafting_Dye,
             ["Pottery"] = GoodsTypes.Vessel_Pottery,
             ["Waterskins"] = GoodsTypes.Vessel_Waterskin,
             ["Amber"] = GoodsTypes.Valuable_Amber,
@@ -61,6 +66,7 @@ namespace Ryguy9999.ATS.ATSForAP {
         };
         public const int PRODUCTIVITY_MODIFIER = 999999;
         public const int TRADE_TOWN_ID = 9999;
+        public const string SCOUT_STRING_PREFIX = "[AP Scout]";
         public const string AP_PROD_EFFECT_NAME = "_AP_ProductionBlocker";
         public const string AP_PROD_EFFECT_CONTROL_NAME = "_AP_ProductionControl";
         public const string AP_GAME_NAME = "Against the Storm";
