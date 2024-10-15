@@ -244,7 +244,6 @@ namespace Ryguy9999.ATS.ATSForAP {
 
             session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, tradeLocationIds.ToArray()).ContinueWith(locationInfoPacket => {
                 Plugin.Log("Interpreting trade location scout response...");
-                Plugin.Logify(locationInfoPacket);
                 foreach(var scout in locationInfoPacket.Result) {
                     LocationScouts.Add(scout.Value.LocationDisplayName, scout.Value);
                 }
