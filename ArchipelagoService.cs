@@ -15,6 +15,7 @@ using Eremite.Services.Monitors;
 using Eremite.View.UI;
 using Newtonsoft.Json.Linq;
 using QFSW.QC;
+using QFSW.QC.Actions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,39 +51,22 @@ namespace Ryguy9999.ATS.ATSForAP {
         }
 
         [Command("ap.c", "Connects to Archipelago server, using most recently used url:port and slotName. Still takes optional password.", Platform.AllPlatforms, MonoTargetType.Single)]
-        public static void InitializeAPConnectionShortcut() {
-            InitializeAPConnection(PlayerPrefs.GetString("ap.url"), PlayerPrefs.GetString("ap.slotName"), null);
+        public static IEnumerator<ICommandAction> InitializeAPConnectionShortcut() {
+            return InitializeAPConnection(PlayerPrefs.GetString("ap.url"), PlayerPrefs.GetString("ap.slotName"), null);
         }
 
         [Command("ap.c", "Connects to Archipelago server, using most recently used url:port and slotName. Still takes optional password.", Platform.AllPlatforms, MonoTargetType.Single)]
-        public static void InitializeAPConnectionShortcut(string password) {
-            InitializeAPConnection(PlayerPrefs.GetString("ap.url"), PlayerPrefs.GetString("ap.slotName"), password);
+        public static IEnumerator<ICommandAction> InitializeAPConnectionShortcut(string password) {
+            return InitializeAPConnection(PlayerPrefs.GetString("ap.url"), PlayerPrefs.GetString("ap.slotName"), password);
         }
 
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
-        public static void InitializeAPConnection([APUrlSuggestion] string url, string player) {
-            InitializeAPConnection(url, player, null);
+        public static IEnumerator<ICommandAction> InitializeAPConnection([APUrlSuggestion] string url, string player) {
+            return InitializeAPConnection(url, player, null);
         }
 
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
-        public static void InitializeAPConnection([APUrlSuggestion] string url, string player, string password) {
-            // TODO item gifting?
-
-            // TODO biome specific locations: grove expeditions, archeology, mega nodes??
-
-            // TODO exclude MSP/PoP
-
-            // TODO food/service utopia locs?
-            // TODO global resolve filler items?
-            // TODO harder logic mode
-
-            // apworld
-            // TODO revert 7->8 building mats and give another pass at building mat logic, should be just Trade
-            // TODO remove start inventory from item pool
-            // TODO arbitrary filler function
-
-            // TODO alert on one idle worker instead of all?
-
+        public static IEnumerator<ICommandAction> InitializeAPConnection([APUrlSuggestion] string url, string player, string password) {
             if (session != null) {
                 DisconnectFromGame();
             }
@@ -108,7 +92,8 @@ namespace Ryguy9999.ATS.ATSForAP {
 
                 Plugin.Log(errorMessage);
                 GameMB.NewsService.PublishNews("Failed to connect to AP!", "The connection to the AP server failed. Check the BepInEx console for potentially more information.", AlertSeverity.Critical);
-                return;
+                yield return new Value($"Failed to connect to {url} as {player}. See BepInEx console for possibly more info.");
+                yield break;
             }
             LoginSuccessful loginSuccess = loginResult as LoginSuccessful;
 
@@ -157,7 +142,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             Plugin.Log("Checking recipe rando...");
-            if ((long)loginSuccess.SlotData["recipe_shuffle"] >= Constants.RECIPE_SHUFFLE_EXCLUDE_CRUDE_WS) {
+            if ((long)loginSuccess.SlotData["recipe_shuffle"] >= Constants.RECIPE_SHUFFLE_EXCLUDE_CRUDE_WS_AND_MS_POST) {
                 if (loginSuccess.SlotData.ContainsKey("production_recipes")) {
                     Dictionary<string, List<List<JValue>>> recipeDict = (loginSuccess.SlotData["production_recipes"] as JObject).ToObject<Dictionary<string, List<List<JValue>>>>();
 
@@ -205,6 +190,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                 if(GameMB.IsGameActive && item.ItemName != null) {
                     HandleItemReceived(item.ItemName);
                 }
+                PlayerPrefs.SetInt("ap.previouslyProcessedLength", session.Items.AllItemsReceived.Count);
             };
             while(session.Items.Any()) {
                 session.Items.DequeueItem();
@@ -249,7 +235,8 @@ namespace Ryguy9999.ATS.ATSForAP {
                 }
             });
 
-            Plugin.Log("Connection to AP complete!");
+            Plugin.Log($"Connection to {url} as {player} complete!");
+            yield return new Value($"Connection to {url} as {player} complete!");
         }
 
         public static bool HasReceivedGuardianPart(string part) {
@@ -260,6 +247,40 @@ namespace Ryguy9999.ATS.ATSForAP {
             return session.Items.AllItemsReceived.Any(itemInfo => itemInfo.ItemDisplayName == part);
         }
 
+        public static int TotalGroveExpeditionLocationsCount() {
+            if(session == null) {
+                return 0;
+            }
+
+            int result = 0;
+            foreach (var loc in session.Locations.AllLocations) {
+                var location = session.Locations.GetLocationNameFromId(loc);
+
+                Match match = new Regex(@"Coastal Grove - \d\d?\w\w Expedition").Match(location);
+                if (match.Success) {
+                    result++;
+                }
+            }
+            return result;
+        }
+
+        public static int CheckedGroveExpeditionLocationsCount() {
+            if(session == null) {
+                return 0;
+            }
+
+            int result = 0;
+            foreach (var loc in session.Locations.AllLocationsChecked) {
+                var location = session.Locations.GetLocationNameFromId(loc);
+
+                Match match = new Regex(@"Coastal Grove - \d\d?\w\w Expedition").Match(location);
+                if (match.Success) {
+                    result++;
+                }
+            }
+            return result;
+        }
+
         public static bool HasReceivedItem(string item) {
             item = Constants.ITEM_DICT.ContainsKey(item) ? Constants.ITEM_DICT[item].ToName() : item;
 
@@ -267,7 +288,7 @@ namespace Ryguy9999.ATS.ATSForAP {
         }
 
         public static void SyncGameStateToAP() {
-            if(session == null) {
+            if (session == null) {
                 Plugin.Log("Tried to sync to AP with a null AP session.");
                 return;
             }
@@ -310,15 +331,21 @@ namespace Ryguy9999.ATS.ATSForAP {
                 });
             }
 
-            foreach (var item in session.Items.AllItemsReceived) {
-                if(Constants.ITEM_DICT.ContainsKey(item.ItemName)) {
+            int previouslyProcessedLength = PlayerPrefs.GetInt("ap.previouslyProcessedLength", 0);
+            foreach (var (item, index) in session.Items.AllItemsReceived.Select((item, index) => (item, index))) {
+                // Goods unlocks
+                if (Constants.ITEM_DICT.ContainsKey(item.ItemName)) {
                     // Goods items will be handled in the next loop
                     continue;
                 }
 
+                // Filler
+                if (item.ItemName == "Survivor Bonding" && (GameMB.GameSaveService.IsNewGame() || index >= previouslyProcessedLength)) {
+                    GameMB.Settings.GetEffect("AncientGate_Hardships").Apply();
+                    continue;
+                }
                 Match match = new Regex(@"(\d+) Starting (.+)").Match(item.ItemName);
-                // TODO in non new games, no way of knowing which filler was already received
-                if (match.Success && GameMB.GameSaveService.IsNewGame()) {
+                if (match.Success && (GameMB.GameSaveService.IsNewGame() || index >= previouslyProcessedLength)) {
                     var fillerQty = Int32.Parse(match.Groups[1].ToString());
                     var fillerType = match.Groups[2].ToString();
                     if (fillerType == "Villagers") {
@@ -333,6 +360,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                     continue;
                 }
 
+                // Blueprints
                 string buildingID = GetIDFromWorkshopName(item.ItemName);
                 if (GameMB.Settings.ContainsBuilding(buildingID)) {
                     GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(buildingID));
@@ -359,6 +387,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                     // No else, AP thinks we shouldn't have the item, further decreasing its productivity would cause a bug
                 }
             }
+            PlayerPrefs.SetInt("ap.previouslyProcessedLength", session.Items.AllItemsReceived.Count);
         }
 
         public static void EnterGame() {
@@ -558,7 +587,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             return true;
         }
 
-        private static string GetOrdinalSuffix(int number) {
+        public static string GetOrdinalSuffix(int number) {
             switch(number) {
             case 1:
                 return "st";
@@ -593,7 +622,8 @@ namespace Ryguy9999.ATS.ATSForAP {
         }
 
         private static void HandleGameResult(bool gameWon) {
-            if(!gameWon) {
+            PlayerPrefs.SetInt("ap.previouslyProcessedLength", 0);
+            if (!gameWon) {
                 return;
             }
 
@@ -643,6 +673,23 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
             if (decisionTag == "Loyalty") {
                 CheckLocation("Complete a Glade Event with a Loyalty tag");
+            }
+
+            if (relic.model.name.StartsWith("Angry Ghost")) {
+                CheckLocation("Cursed Royal Woodlands - Appease an Angry Ghost");
+            }
+            if(relic.model.name.StartsWith("Calm Ghost")) {
+                CheckLocation("Cursed Royal Woodlands - Appease a Calm Ghost");
+            }
+
+            if (relic.model.name == "Spider 3") {
+                CheckLocation("Scarlet Orchard - Reconstruct the Sealed Spider");
+            }
+            if (relic.model.name == "Snake 3") {
+                CheckLocation("Scarlet Orchard - Reconstruct the Sea Snake");
+            }
+            if (relic.model.name == "Scorpion 3") {
+                CheckLocation("Scarlet Orchard - Reconstruct the Smoldering Scorpion");
             }
         }
 
@@ -789,6 +836,10 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             // Filler
+            if(itemName == "Survivor Bonding") {
+                GameMB.Settings.GetEffect("AncientGate_Hardships").Apply();
+                return;
+            }
             Match match = new Regex(@"(\d+) Starting (.+)").Match(itemName);
             if(match.Success) {
                 var fillerQty = Int32.Parse(match.Groups[1].ToString());

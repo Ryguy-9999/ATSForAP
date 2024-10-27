@@ -11,6 +11,7 @@ using System.Reflection;
 using ATS_API.Helpers;
 using Eremite.Services;
 using Newtonsoft.Json;
+using ATS_API.Localization;
 
 namespace Ryguy9999.ATS.ATSForAP
 {
@@ -49,6 +50,8 @@ namespace Ryguy9999.ATS.ATSForAP
             // Main entry point to access this data will be `Serviceable.Settings` or `MainController.Instance.Settings`
             MB.Controller.Build.type = Eremite.Model.Configs.BuildType.Development;
 
+            LocalizationManager.AddString("ATSForAP_GameUI_APExpeditionCategory", "AP Checks");
+
             // Setup defaults for the Training Expedition Menu
             MB.Settings.customGameConfig.reputationDefaultIndex = 2; // P1 14 -> 18 Reputation
             MB.Settings.customGameConfig.stormDurationDefaultIndex = 3; // P2 Storm 02:00 -> 04:00
@@ -83,11 +86,11 @@ namespace Ryguy9999.ATS.ATSForAP
                 } else if (good.Name == GoodsTypes.Food_Raw_Fish.ToName()) {
                     good.amount = 28;
                 } else if (good.Name == GoodsTypes.Mat_Processed_Planks.ToName()) {
-                    good.amount = 8;
+                    good.amount = 7;
                 } else if (good.Name == GoodsTypes.Mat_Processed_Fabric.ToName()) {
-                    good.amount = 8;
+                    good.amount = 7;
                 } else if (good.Name == GoodsTypes.Mat_Processed_Bricks.ToName()) {
-                    good.amount = 8;
+                    good.amount = 7;
                 }
             }
         }
@@ -134,12 +137,11 @@ namespace Ryguy9999.ATS.ATSForAP
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.StartGame))]
         [HarmonyPostfix]
-        private static void HookEveryGameStart()
-        {
+        private static void HookEveryGameStart() {
             //var isNewGame = MB.GameSaveService.IsNewGame();
             //if (isNewGame) {
-                //EffectModel effectModel = SO.Settings.GetEffect($"{PluginInfo.PLUGIN_GUID}_Archipelago");
-                //effectModel.Apply();
+            //EffectModel effectModel = SO.Settings.GetEffect($"{PluginInfo.PLUGIN_GUID}_Archipelago");
+            //effectModel.Apply();
             ////    ArchipelagoService.SetupNewGame();
             //}
 

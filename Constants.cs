@@ -71,8 +71,10 @@ namespace Ryguy9999.ATS.ATSForAP {
         public const string AP_PROD_EFFECT_CONTROL_NAME = "_AP_ProductionControl";
         public const string AP_GAME_NAME = "Against the Storm";
         public const long RECIPE_SHUFFLE_VANILLA = 0;
-        public const long RECIPE_SHUFFLE_EXCLUDE_CRUDE_WS = 1;
-        public const long RECIPE_SHUFFLE_FULL_SHUFFLE = 2;
+        public const long RECIPE_SHUFFLE_EXCLUDE_CRUDE_WS_AND_MS_POST = 1;
+        public const long RECIPE_SHUFFLE_EXCLUDE_CRUDE_WS = 2;
+        public const long RECIPE_SHUFFLE_EXCLUDE_MS_POST = 3;
+        public const long RECIPE_SHUFFLE_FULL_SHUFFLE = 4;
         public const long DEATHLINK_OFF = 0;
         public const long DEATHLINK_DEATH_ONLY = 1;
         public const long DEATHLINK_LEAVE_AND_DEATH = 2;

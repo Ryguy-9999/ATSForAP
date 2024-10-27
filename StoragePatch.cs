@@ -1,10 +1,13 @@
 ﻿using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using ATS_API.Helpers;
+using ATS_API.Localization;
 using Eremite;
 using Eremite.Buildings;
 using Eremite.Buildings.UI;
+using Eremite.Buildings.UI.Ports;
 using Eremite.Buildings.UI.Seals;
+using Eremite.Characters.Behaviours;
 using Eremite.Model;
 using Eremite.Model.State;
 using Eremite.Services;
@@ -272,6 +275,92 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return false;
             }
 
+            return true;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(HarvestDeposit), nameof(HarvestDeposit.OnComplete))]
+        private static void HarvestCompletePostfix(HarvestDeposit __instance) {
+            var name = __instance.deposit.name;
+            if (name.Contains("Marshlands Infinite")) {
+                if (name.Contains("Grain")) {
+                    ArchipelagoService.CheckLocation("The Marshlands - Harvest from an Ancient Proto Wheat");
+                }
+                if (name.Contains("Meat")) {
+                    ArchipelagoService.CheckLocation("The Marshlands - Harvest from a Dead Leviathan");
+                }
+                if (name.Contains("Mushroom")) {
+                    ArchipelagoService.CheckLocation("The Marshlands - Harvest from a Giant Proto Fungus");
+                }
+            }
+        }
+
+        private static BuildingCategoryModel apExpeditionCategoryModel = new BuildingCategoryModel {
+            name = "AP Checks",
+            icon = TextureHelper.GetImageAsSprite("ap-category-icon.png", TextureHelper.SpriteType.EffectIcon),
+            isActive = true,
+            isOnHUD = false,
+            isDebugOnHUD = false,
+            shortName = LocalizationManager.ToLocaText("ATSForAP_GameUI_APExpeditionCategory"),
+            displayName = LocalizationManager.ToLocaText("ATSForAP_GameUI_APExpeditionCategory")
+        };
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(PortRewardsPickPanel), nameof(PortRewardsPickPanel.GetCategories))]
+        private static void GetCategoriesPostfix(ref List<BuildingCategoryModel> __result) {
+            if(ArchipelagoService.TotalGroveExpeditionLocationsCount() > 0) {
+                __result.Add(apExpeditionCategoryModel);
+            }
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(BuildingCategoryMenuSlot), nameof(BuildingCategoryMenuSlot.CountOwned))]
+        private static bool PortMenuSlotCountOwnedPrefix(BuildingCategoryMenuSlot __instance, ref int __result) {
+            if (__instance.model.displayName.Text == "AP Checks") {
+                __result = ArchipelagoService.CheckedGroveExpeditionLocationsCount();
+                return false;
+            }
+            return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(BuildingCategoryMenuSlot), nameof(BuildingCategoryMenuSlot.CountMax))]
+        private static bool PortMenuSlotCountMaxPrefix(BuildingCategoryMenuSlot __instance, ref int __result) {
+            if (__instance.model.displayName.Text == "AP Checks") {
+                __result = ArchipelagoService.TotalGroveExpeditionLocationsCount();
+                return false;
+            }
+            return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(PortRewardsPickPanel), nameof(PortRewardsPickPanel.GetCurrentCategory))]
+        private static bool PortRewardPanelGetCategoryPrefix(PortRewardsPickPanel __instance, ref BuildingCategoryModel __result) {
+            Plugin.Log(__instance.port.state.pickedCategory);
+            if(__instance.port.state.pickedCategory == "AP Checks") {
+                __result = apExpeditionCategoryModel;
+                return false;
+            }
+            return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(PortRewardsGenerator), nameof(PortRewardsGenerator.SetMainReward))]
+        private static bool PortRewardGeneratorMainRewardPrefix(PortRewardsGenerator __instance) {
+            if(__instance.port.state.pickedCategory == "AP Checks") {
+                int expeditionNumber = ArchipelagoService.CheckedGroveExpeditionLocationsCount() + 1;
+                ArchipelagoService.CheckLocation($"Coastal Grove - {expeditionNumber}{ArchipelagoService.GetOrdinalSuffix(expeditionNumber)} Expedition");
+                return false;
+            }
+            return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(PortRewardsPanel), nameof(PortRewardsPanel.HasBlueprintReward))]
+        private static bool PortRewardsBPRewardPrefix(PortRewardsPanel __instance, ref bool __result) {
+            if (__instance.port.state.pickedCategory == "AP Checks") {
+                __result = false;
+                return false;
+            }
             return true;
         }
     }
