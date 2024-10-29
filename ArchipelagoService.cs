@@ -766,7 +766,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                 CheckLocation("Have 20 Villagers in fully upgraded Housing - Foxes");
             }
             if (EnabledDLC && GameMB.RacesService.HasRace("Frog") && GetFullyUpgradedHousedAmount("Frog") >= 20) {
-                CheckLocation("Have 20 Villagers in fully upgraded Housing - Frog");
+                CheckLocation("Have 20 Villagers in fully upgraded Housing - Frogs");
             }
 
             // Handle filler villagers received mid game in a game thread, as ItemReceived causes crashes
