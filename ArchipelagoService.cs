@@ -27,14 +27,14 @@ using UnityEngine;
 namespace Ryguy9999.ATS.ATSForAP {
     class ArchipelagoService : GameService, IGameService, IService {
         private static Dictionary<string, Subject<int>> itemCallbacks = new Dictionary<string, Subject<int>>();
-        private static ArchipelagoSession session;
+        public static ArchipelagoSession session;
         private static long DeathlinkState = -1;
         private static DeathLinkService deathLinkService;
         private static List<IDisposable> GameSubscriptions = new List<IDisposable>();
         private static Queue<string> LocationQueue = new Queue<string>();
         private static Dictionary<string, Sprite> OriginalGoodIcons = new Dictionary<string, Sprite>();
         private static bool ShowAPLockIcons = true;
-        private static List<(Sprite icon, string message, string detail)> ItemsForNews = new List<(Sprite icon, string message, string detail)>();
+        public static List<(Sprite icon, string message, string detail)> ItemsForNews = new List<(Sprite icon, string message, string detail)>();
         private static int VillagersToSpawn = 0;
         private static News ApConnectionNews;
         private static List<int> ReputationLocationIndices = new List<int>();
@@ -217,6 +217,9 @@ namespace Ryguy9999.ATS.ATSForAP {
                 };
             }
 
+            Plugin.Log("Initializing gifting service...");
+            ATSGiftingService.InitializeGifting(session);
+
             Plugin.Log("Scouting trade locations...");
             var tradeLocationIds = new List<long>();
             foreach (var loc in session.Locations.AllMissingLocations) {
@@ -397,6 +400,8 @@ namespace Ryguy9999.ATS.ATSForAP {
             } else {
                 SyncGameStateToAP();
             }
+
+            ATSGiftingService.EnterGame();
 
             if(GameSubscriptions.Count > 0) {
                 foreach (IDisposable disposable in GameSubscriptions) {
