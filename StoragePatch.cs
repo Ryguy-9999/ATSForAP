@@ -4,7 +4,6 @@ using ATS_API.Helpers;
 using ATS_API.Localization;
 using Eremite;
 using Eremite.Buildings;
-using Eremite.Buildings.UI;
 using Eremite.Buildings.UI.Ports;
 using Eremite.Buildings.UI.Seals;
 using Eremite.Characters.Behaviours;
@@ -17,7 +16,6 @@ using Eremite.View.HUD.TradeRoutes;
 using Eremite.View.Menu;
 using Eremite.WorldMap.UI.CustomGames;
 using HarmonyLib;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -313,8 +311,8 @@ namespace Ryguy9999.ATS.ATSForAP {
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(BuildingCategoryMenuSlot), nameof(BuildingCategoryMenuSlot.CountOwned))]
-        private static bool PortMenuSlotCountOwnedPrefix(BuildingCategoryMenuSlot __instance, ref int __result) {
+        [HarmonyPatch(typeof(BuildingCategoryRadialSlot), nameof(BuildingCategoryRadialSlot.CountOwned))]
+        private static bool PortMenuSlotCountOwnedPrefix(BuildingCategoryRadialSlot __instance, ref int __result) {
             if (__instance.model.displayName.Text == "AP Checks") {
                 __result = ArchipelagoService.CheckedGroveExpeditionLocationsCount();
                 return false;
@@ -323,8 +321,8 @@ namespace Ryguy9999.ATS.ATSForAP {
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(BuildingCategoryMenuSlot), nameof(BuildingCategoryMenuSlot.CountMax))]
-        private static bool PortMenuSlotCountMaxPrefix(BuildingCategoryMenuSlot __instance, ref int __result) {
+        [HarmonyPatch(typeof(BuildingCategoryRadialSlot), nameof(BuildingCategoryRadialSlot.CountMax))]
+        private static bool PortMenuSlotCountMaxPrefix(BuildingCategoryRadialSlot __instance, ref int __result) {
             if (__instance.model.displayName.Text == "AP Checks") {
                 __result = ArchipelagoService.TotalGroveExpeditionLocationsCount();
                 return false;
@@ -347,7 +345,10 @@ namespace Ryguy9999.ATS.ATSForAP {
         [HarmonyPatch(typeof(PortRewardsGenerator), nameof(PortRewardsGenerator.SetMainReward))]
         private static bool PortRewardGeneratorMainRewardPrefix(PortRewardsGenerator __instance) {
             if(__instance.port.state.pickedCategory == "AP Checks") {
-                int expeditionNumber = ArchipelagoService.CheckedGroveExpeditionLocationsCount() + 1;
+                int expeditionNumber = ArchipelagoService.GetNextUncheckedGroveExpedition();
+                if(expeditionNumber < 0) {
+                    return true;
+                }
                 ArchipelagoService.CheckLocation($"Coastal Grove - {expeditionNumber}{ArchipelagoService.GetOrdinalSuffix(expeditionNumber)} Expedition");
                 return false;
             }
@@ -362,6 +363,16 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return false;
             }
             return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(PerkCrafter), nameof(PerkCrafter.CreateCurrentPerk))]
+        private static void PerkCraftingCreatePrefix() {
+            int forgeNumber = ArchipelagoService.GetNextUncheckedCornerstoneForge();
+            if(forgeNumber < 0) {
+                return;
+            }
+            ArchipelagoService.CheckLocation($"Ashen Thicket - Forge {forgeNumber}{ArchipelagoService.GetOrdinalSuffix(forgeNumber)} Cornerstone");
         }
     }
 }

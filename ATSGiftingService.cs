@@ -61,11 +61,12 @@ namespace Ryguy9999.ATS.ATSForAP {
             ["Reed"] = new GiftTrait[] { new GiftTrait("Material", 1, 1) },
             ["Resin"] = new GiftTrait[] { new GiftTrait("Material", 1, 1), new GiftTrait("Amber", 1, 0.1) },
             ["Stone"] = new GiftTrait[] { new GiftTrait("Stone", 1, 1), new GiftTrait("Material", 1, 1) },
+            ["Salt"] = new GiftTrait[] { new GiftTrait("Salted", 1, 1), new GiftTrait("Mineral", 1, 1), new GiftTrait("Material", 1, 1) },
             ["Barrel"] = new GiftTrait[] { new GiftTrait("Container", 1, 1) },
             ["Copper Bar"] = new GiftTrait[] { new GiftTrait("Metal", 1, 1), new GiftTrait("Copper", 1, 1), new GiftTrait("Material", 1, 1) },
             ["Flour"] = new GiftTrait[] { new GiftTrait("Flour", 1, 1) },
             ["Dye"] = new GiftTrait[] { new GiftTrait("Dye", 1, 1), new GiftTrait("Material", 1, 1) },
-            ["Pottery"] = new GiftTrait[] { new GiftTrait("Container", 1, 1) },
+            ["Pottery"] = new GiftTrait[] { new GiftTrait("Ceramic", 1, 1), new GiftTrait("Container", 1, 1) },
             ["Waterskin"] = new GiftTrait[] { new GiftTrait("Container", 1, 1) },
             ["Amber"] = new GiftTrait[] { new GiftTrait("Amber", 1, 1), new GiftTrait("Currency", 1, 1), new GiftTrait("Gem", 1, 1) },
             ["Pack of Building Materials"] = new GiftTrait[] { new GiftTrait("Pack", 1, 1) },
@@ -126,6 +127,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             [GoodsTypes.Mat_Raw_Reeds.ToName()] = "Reed",
             [GoodsTypes.Mat_Raw_Resin.ToName()] = "Resin",
             [GoodsTypes.Mat_Raw_Stone.ToName()] = "Stone",
+            [GoodsTypes.Crafting_Salt.ToName()] = "Salt",
             [GoodsTypes.Vessel_Barrels.ToName()] = "Barrel",
             [GoodsTypes.Metal_Copper_Bar.ToName()] = "Copper Bar",
             [GoodsTypes.Crafting_Flour.ToName()] = "Flour",
@@ -157,8 +159,6 @@ namespace Ryguy9999.ATS.ATSForAP {
                 HandleNewGifts(giftingService.GetAllGiftsAndEmptyGiftbox());
             }
 
-            // Created traits
-            // Berry, Insect, Root, Oil, Fuel, Water, Amber, Clay, Leather, Container, Cloth, Clothing, Luxury, Gear, Pipe, Pack, Grain, Flour, Herb
             foreach (var item in giftTagDictionary) {
                 giftTraitParser.RegisterAvailableGift(item.Key, item.Value);
             }

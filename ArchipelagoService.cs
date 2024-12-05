@@ -284,6 +284,46 @@ namespace Ryguy9999.ATS.ATSForAP {
             return result;
         }
 
+        public static int GetNextUncheckedGroveExpedition() {
+            int lowestExpedition = -1;
+
+            foreach (var loc in session.Locations.AllMissingLocations) {
+                var location = session.Locations.GetLocationNameFromId(loc);
+
+                Match match = new Regex(@"Coastal Grove - (\d\d?)\w\w Expedition").Match(location);
+                if (match.Success) {
+                    int expeditionNumber = Int32.Parse(match.Groups[1].ToString());
+                    if(lowestExpedition < 0) {
+                        lowestExpedition = expeditionNumber;
+                    } else {
+                        lowestExpedition = Math.Min(lowestExpedition, expeditionNumber);
+                    }
+                }
+            }
+
+            return lowestExpedition;
+        }
+
+        public static int GetNextUncheckedCornerstoneForge() {
+            int lowestForge = -1;
+
+            foreach (var loc in session.Locations.AllMissingLocations) {
+                var location = session.Locations.GetLocationNameFromId(loc);
+
+                Match match = new Regex(@"Ashen Thicket - Forge (\d)\w\w Cornerstone").Match(location);
+                if (match.Success) {
+                    int forgeNumber = Int32.Parse(match.Groups[1].ToString());
+                    if(lowestForge < 0) {
+                        lowestForge = forgeNumber;
+                    } else {
+                        lowestForge = Math.Min(lowestForge, forgeNumber);
+                    }
+                }
+            }
+
+            return lowestForge;
+        }
+
         public static bool HasReceivedItem(string item) {
             item = Constants.ITEM_DICT.ContainsKey(item) ? Constants.ITEM_DICT[item].ToName() : item;
 
@@ -633,8 +673,8 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             // Biome Victory
-            var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard").Replace("Bay", "Coastal Grove");
-            if(EnabledDLC || biome != "Coastal Grove") {
+            var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard").Replace("Bay", "Coastal Grove").Replace("Wasteland", "Ashen Thicket");
+            if(EnabledDLC || (biome != "Coastal Grove" && biome != "Ashen Thicket")) {
                 CheckLocation("Victory - " + biome);
             }
 
@@ -669,14 +709,14 @@ namespace Ryguy9999.ATS.ATSForAP {
                 CheckLocation("Complete a Forbidden Glade Event");
             }
 
-            string decisionTag = relic.GetCurrentDecision()?.decisionTag?.displayName?.Text;
-            if (decisionTag == "Corruption") {
+            string decisionTag = relic.GetCurrentDecision()?.decisionTag?.displayName?.key;
+            if (decisionTag == "DecisionTag_Corruption") {
                 CheckLocation("Complete a Glade Event with a Corruption tag");
             }
-            if (decisionTag == "Empathy") {
+            if (decisionTag == "DecisionTag_Empathy") {
                 CheckLocation("Complete a Glade Event with an Empathy tag");
             }
-            if (decisionTag == "Loyalty") {
+            if (decisionTag == "DecisionTag_Loyalty") {
                 CheckLocation("Complete a Glade Event with a Loyalty tag");
             }
 
@@ -725,8 +765,8 @@ namespace Ryguy9999.ATS.ATSForAP {
 
             // Overall Reputation for biome
             var repGained = GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Order) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Other) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Relics) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Resolve);
-            var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard").Replace("Bay", "Coastal Grove").Replace("Sealed Biome", "Sealed Forest");
-            if (EnabledDLC || biome != "Coastal Grove") {
+            var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard").Replace("Bay", "Coastal Grove").Replace("Wasteland", "Ashen Thicket").Replace("Sealed Biome", "Sealed Forest");
+            if (EnabledDLC || (biome != "Coastal Grove" && biome != "Ashen Thicket")) {
                 foreach (int repIndex in ReputationLocationIndices) {
                     if (repGained >= repIndex) {
                         CheckLocation($"{repIndex}{GetOrdinalSuffix(repIndex)} Reputation - {biome}");

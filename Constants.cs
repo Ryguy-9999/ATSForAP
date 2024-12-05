@@ -45,6 +45,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             ["Reeds"] = GoodsTypes.Mat_Raw_Reeds,
             ["Resin"] = GoodsTypes.Mat_Raw_Resin,
             ["Stone"] = GoodsTypes.Mat_Raw_Stone,
+            ["Salt"] = GoodsTypes.Crafting_Salt,
             ["Barrels"] = GoodsTypes.Vessel_Barrels,
             ["Copper Bars"] = GoodsTypes.Metal_Copper_Bar,
             ["Flour"] = GoodsTypes.Crafting_Flour,
