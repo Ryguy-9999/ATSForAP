@@ -114,6 +114,14 @@ namespace Ryguy9999.ATS.ATSForAP
       PlayerPrefs.SetString("ap.url", url);
       PlayerPrefs.SetString("ap.slotName", player);
 
+      HandleLogin(loginSuccess);
+
+      Plugin.Log($"Connection to {url} as {player} complete!");
+      yield return new Value($"Connection to {url} as {player} complete!");
+    }
+
+    private static void HandleLogin(LoginSuccessful loginSuccess)
+    {
       if (GameMB.IsGameActive)
       {
         SyncGameStateToAP();
@@ -133,6 +141,20 @@ namespace Ryguy9999.ATS.ATSForAP
         {
           CheckLocation(flushQueue.Dequeue());
         }
+      }
+
+      session.Items.ItemReceived += (receivedItemsHelper) =>
+      {
+        ItemInfo item = session.Items.DequeueItem();
+        if (GameMB.IsGameActive && item.ItemName != null)
+        {
+          HandleItemReceived(item.ItemName);
+        }
+        PlayerPrefs.SetInt("ap.previouslyProcessedLength", session.Items.AllItemsReceived.Count);
+      };
+      while (session.Items.Any())
+      {
+        session.Items.DequeueItem();
       }
 
       ReadSlotData(loginSuccess);
@@ -166,9 +188,6 @@ namespace Ryguy9999.ATS.ATSForAP
           LocationScouts.Add(scout.Value.LocationDisplayName, scout.Value);
         }
       });
-
-      Plugin.Log($"Connection to {url} as {player} complete!");
-      yield return new Value($"Connection to {url} as {player} complete!");
     }
 
     private static void ReadSlotData(LoginSuccessful loginSuccess)
@@ -268,20 +287,6 @@ namespace Ryguy9999.ATS.ATSForAP
       {
         Plugin.Log("Could not find required_seal_tasks in SlotData, falling back to 1.");
         RequiredSealTasks = 1;
-      }
-
-      session.Items.ItemReceived += (receivedItemsHelper) =>
-      {
-        ItemInfo item = session.Items.DequeueItem();
-        if (GameMB.IsGameActive && item.ItemName != null)
-        {
-          HandleItemReceived(item.ItemName);
-        }
-        PlayerPrefs.SetInt("ap.previouslyProcessedLength", session.Items.AllItemsReceived.Count);
-      };
-      while (session.Items.Any())
-      {
-        session.Items.DequeueItem();
       }
 
       Plugin.Log("Checking deathlink...");
