@@ -135,6 +135,44 @@ namespace Ryguy9999.ATS.ATSForAP
         }
       }
 
+      ReadSlotData(loginSuccess);
+
+      session.MessageLog.OnMessageReceived += (message) =>
+      {
+        Plugin.Log("[AP]    " + message);
+      };
+
+      Plugin.Log("Initializing gifting service...");
+      ATSGiftingService.InitializeGifting(session);
+
+      Plugin.Log("Scouting trade locations...");
+      var tradeLocationIds = new List<long>();
+      foreach (var loc in session.Locations.AllMissingLocations)
+      {
+        var location = session.Locations.GetLocationNameFromId(loc);
+
+        Match match = new Regex(@"Trade - (\d+) (.+)").Match(location);
+        if (match.Success)
+        {
+          tradeLocationIds.Add(loc);
+        }
+      }
+
+      session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, tradeLocationIds.ToArray()).ContinueWith(locationInfoPacket =>
+      {
+        Plugin.Log("Interpreting trade location scout response...");
+        foreach (var scout in locationInfoPacket.Result)
+        {
+          LocationScouts.Add(scout.Value.LocationDisplayName, scout.Value);
+        }
+      });
+
+      Plugin.Log($"Connection to {url} as {player} complete!");
+      yield return new Value($"Connection to {url} as {player} complete!");
+    }
+
+    private static void ReadSlotData(LoginSuccessful loginSuccess)
+    {
       Plugin.Log("Checking blueprint rando...");
       if (loginSuccess.SlotData.ContainsKey("blueprint_items"))
       {
@@ -246,11 +284,6 @@ namespace Ryguy9999.ATS.ATSForAP
         session.Items.DequeueItem();
       }
 
-      session.MessageLog.OnMessageReceived += (message) =>
-      {
-        Plugin.Log("[AP]    " + message);
-      };
-
       Plugin.Log("Checking deathlink...");
       if (loginSuccess.SlotData.ContainsKey("deathlink"))
       {
@@ -273,34 +306,6 @@ namespace Ryguy9999.ATS.ATSForAP
           }
         };
       }
-
-      Plugin.Log("Initializing gifting service...");
-      ATSGiftingService.InitializeGifting(session);
-
-      Plugin.Log("Scouting trade locations...");
-      var tradeLocationIds = new List<long>();
-      foreach (var loc in session.Locations.AllMissingLocations)
-      {
-        var location = session.Locations.GetLocationNameFromId(loc);
-
-        Match match = new Regex(@"Trade - (\d+) (.+)").Match(location);
-        if (match.Success)
-        {
-          tradeLocationIds.Add(loc);
-        }
-      }
-
-      session.Locations.ScoutLocationsAsync(HintCreationPolicy.CreateAndAnnounceOnce, tradeLocationIds.ToArray()).ContinueWith(locationInfoPacket =>
-      {
-        Plugin.Log("Interpreting trade location scout response...");
-        foreach (var scout in locationInfoPacket.Result)
-        {
-          LocationScouts.Add(scout.Value.LocationDisplayName, scout.Value);
-        }
-      });
-
-      Plugin.Log($"Connection to {url} as {player} complete!");
-      yield return new Value($"Connection to {url} as {player} complete!");
     }
 
     public static bool HasReceivedGuardianPart(string part)
