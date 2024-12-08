@@ -94,16 +94,16 @@ namespace Ryguy9999.ATS.ATSForAP
       if (!loginResult.Successful)
       {
         LoginFailure failure = (LoginFailure)loginResult;
-        return HandleFailure(failure, url, player);
+        return HandleConnectionFailure(failure, url, player);
       }
       else
       {
         LoginSuccessful loginSuccess = loginResult as LoginSuccessful;
-        return HandleSuccess(loginSuccess, url, player, password);
+        return HandleConnectionSuccess(loginSuccess, url, player, password);
       }
     }
 
-    private static IEnumerator<ICommandAction> HandleFailure(LoginFailure failure, string url = null, string player = null)
+    private static IEnumerator<ICommandAction> HandleConnectionFailure(LoginFailure failure, string url = null, string player = null)
     {
       string errorMessage = $"Failed to Connect to {url} as {player}:";
       foreach (string error in failure.Errors)
@@ -121,7 +121,7 @@ namespace Ryguy9999.ATS.ATSForAP
       yield break;
     }
 
-    private static IEnumerator<ICommandAction> HandleSuccess(LoginSuccessful loginSuccess, string url, string player, string password)
+    private static IEnumerator<ICommandAction> HandleConnectionSuccess(LoginSuccessful loginSuccess, string url, string player, string password)
     {
       PlayerPrefs.SetString("ap.url", url);
       PlayerPrefs.SetString("ap.slotName", player);
