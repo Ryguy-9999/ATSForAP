@@ -65,15 +65,15 @@ namespace Ryguy9999.ATS.ATSForAP {
             ["Sea Marrow"] = GoodsTypes.Crafting_Sea_Marrow,
             ["Tools"] = GoodsTypes.Tools_Simple_Tools,
         };
-        public static Dictionary<string, List<GoodsTypes>> PROGRESSIVE_GOODS = new Dictionary<string, List<GoodsTypes>> {
-            ["Progressive Complex Food"] = new List<GoodsTypes> {
-              GoodsTypes.Food_Processed_Porridge,
-              GoodsTypes.Food_Processed_Jerky,
-              GoodsTypes.Food_Processed_Pie,
-              GoodsTypes.Food_Processed_Skewers,
-              GoodsTypes.Food_Processed_Paste,
-              GoodsTypes.Food_Processed_Pickled_Goods,
-              GoodsTypes.Food_Processed_Biscuits,
+        public static Dictionary<string, List<string>> PROGRESSIVE_GOODS = new Dictionary<string, List<string>> {
+            ["Progressive Complex Food"] = new List<string> {
+              "Porridge",
+              "Jerky",
+              "Pie",
+              "Skewers",
+              "Paste",
+              "Pickled Goods",
+              "Biscuits",
             },
         };
         public const int PRODUCTIVITY_MODIFIER = 999999;
