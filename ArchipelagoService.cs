@@ -920,7 +920,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             // Progressive goods
             if (Constants.PROGRESSIVE_GOODS.ContainsKey(itemName)) {
                 var howManyReceived = session.Items.AllItemsReceived.Count(itemInfo => itemInfo.ItemDisplayName == itemName);
-                OnReceiveGood(itemName, Constants.PROGRESSIVE_GOODS[itemName][howManyReceived].ToName());
+                OnReceiveGood(itemName, Constants.PROGRESSIVE_GOODS[itemName][howManyReceived - 1].ToName());
                 return;
             }
 
