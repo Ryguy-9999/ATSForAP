@@ -4,11 +4,11 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Ryguy9999.ATS.ATSForAP</AssemblyName>
     <Description>AP Mod for Against The Storm - by Ryguy9999</Description>
-    <Version>0.9.0</Version>
+    <Version>0.9.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-    <StormPath>D:\\SteamLibrary\\steamapps\\common\\Against the Storm</StormPath>
-    <BepInExPath>C:\\Users\\ryanc\\AppData\\Roaming\\Thunderstore Mod Manager\\DataFolder\\AgainstTheStorm\\profiles\\APModTesting</BepInExPath>
+    <StormPath>C:\\Program Files (x86)\\Steam\\steamapps\\common\\Against the Storm</StormPath>
+    <BepInExPath>C:\\Users\\ryanc\\AppData\\Roaming\\Thunderstore Mod Manager\\DataFolder\\AgainstTheStorm\\profiles\\Default</BepInExPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
@@ -31,345 +31,350 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
-    <Reference Include="$(StormPath)/Against the Storm_Data/Managed/Assembly-CSharp.dll" Publicize="true" private="false" />
+    <Reference Include="Assembly-CSharp" Publicize="true" private="false">
+		<HintPath>C:/Program Files (x86)/Steam/steamapps/common/Against the Storm/Against the Storm_Data/Managed/Assembly-CSharp.dll</HintPath>
+	</Reference>
     <Reference Include="API">
-		  <HintPath>..\..\..\AppData\Roaming\Thunderstore Mod Manager\DataFolder\AgainstTheStorm\profiles\APModTesting\BepInEx\plugins\ATS_API_Devs-API\API.dll</HintPath>
+		  <HintPath>C:\Users\ryanc\AppData\Roaming\Thunderstore Mod Manager\DataFolder\AgainstTheStorm\profiles\Default\BepInEx\plugins\ATS_API_Devs-API\API.dll</HintPath>
 		</Reference>
 		<Reference Include="QFSW.QC">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.dll</HintPath>
 		</Reference>
 		<Reference Include="QFSW.QC.Demo">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Demo.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Demo.dll</HintPath>
 		</Reference>
 		<Reference Include="QFSW.QC.Extras">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Extras.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Extras.dll</HintPath>
 		</Reference>
 		<Reference Include="QFSW.QC.Grammar">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Grammar.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Grammar.dll</HintPath>
 		</Reference>
 		<Reference Include="QFSW.QC.Parsers">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Parsers.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Parsers.dll</HintPath>
 		</Reference>
 		<Reference Include="QFSW.QC.ScanRules">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.ScanRules.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.ScanRules.dll</HintPath>
 		</Reference>
 		<Reference Include="QFSW.QC.Serializers">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Serializers.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Serializers.dll</HintPath>
 		</Reference>
 		<Reference Include="QFSW.QC.Suggestors">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Suggestors.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.Suggestors.dll</HintPath>
 		</Reference>
 		<Reference Include="QFSW.QC.UI">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.UI.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\QFSW.QC.UI.dll</HintPath>
 		</Reference>
 		<Reference Include="Sirenix.OdinInspector.Attributes">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Sirenix.OdinInspector.Attributes.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Sirenix.OdinInspector.Attributes.dll</HintPath>
 		</Reference>
 		<Reference Include="Sirenix.Serialization">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Sirenix.Serialization.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Sirenix.Serialization.dll</HintPath>
 		</Reference>
 		<Reference Include="Sirenix.Serialization.Config">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Sirenix.Serialization.Config.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Sirenix.Serialization.Config.dll</HintPath>
 		</Reference>
 		<Reference Include="Sirenix.Utilities">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Sirenix.Utilities.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Sirenix.Utilities.dll</HintPath>
 		</Reference>
 		<Reference Include="UniRx">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniRx.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniRx.dll</HintPath>
 		</Reference>
 		<Reference Include="UniTask">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniTask.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniTask.dll</HintPath>
 		</Reference>
 		<Reference Include="UniTask.Addressables">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniTask.Addressables.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniTask.Addressables.dll</HintPath>
 		</Reference>
 		<Reference Include="UniTask.DOTween">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniTask.DOTween.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniTask.DOTween.dll</HintPath>
 		</Reference>
 		<Reference Include="UniTask.Linq">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniTask.Linq.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniTask.Linq.dll</HintPath>
 		</Reference>
 		<Reference Include="UniTask.TextMeshPro">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniTask.TextMeshPro.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UniTask.TextMeshPro.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.Addressables">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Addressables.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Addressables.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.Burst">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Burst.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Burst.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.Burst.Unsafe">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Burst.Unsafe.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Burst.Unsafe.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.Collections">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Collections.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Collections.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.Collections.LowLevel.ILSupport">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.Formats.Fbx.Runtime">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Formats.Fbx.Runtime.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Formats.Fbx.Runtime.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.InputSystem">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.InputSystem.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.InputSystem.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.InputSystem.ForUI">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.InputSystem.ForUI.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.InputSystem.ForUI.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.Jobs">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Jobs.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Jobs.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.Mathematics">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Mathematics.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Mathematics.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.ProGrids">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.ProGrids.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.ProGrids.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.Recorder">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Recorder.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Recorder.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.Recorder.Base">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Recorder.Base.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Recorder.Base.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.RenderPipeline.Universal.ShaderLibrary">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipeline.Universal.ShaderLibrary.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipeline.Universal.ShaderLibrary.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.RenderPipelines.Core.Runtime">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.RenderPipelines.Universal.Runtime">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.RenderPipelines.Universal.Shaders">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipelines.Universal.Shaders.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.RenderPipelines.Universal.Shaders.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.ResourceManager">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.ResourceManager.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.ResourceManager.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.ScriptableBuildPipeline">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.ScriptableBuildPipeline.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.ScriptableBuildPipeline.dll</HintPath>
+		</Reference>
+		<Reference Include="Unity.Splines">
+		  <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Splines.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.TextMeshPro">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.TextMeshPro.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.Timeline">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Timeline.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.Timeline.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.VisualEffectGraph.Runtime">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.VisualEffectGraph.Runtime.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\Unity.VisualEffectGraph.Runtime.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.AccessibilityModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AccessibilityModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AccessibilityModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.AIModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AIModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AIModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.AndroidJNIModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AndroidJNIModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AndroidJNIModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.AnimationModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.ARModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ARModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ARModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.AssetBundleModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.AudioModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.ClothModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ClothModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ClothModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.ClusterInputModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ClusterInputModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ClusterInputModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.ClusterRendererModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ClusterRendererModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ClusterRendererModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.CoreModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.CrashReportingModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.CrashReportingModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.CrashReportingModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.DirectorModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.DirectorModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.DirectorModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.DSPGraphModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.DSPGraphModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.DSPGraphModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.GameCenterModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.GameCenterModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.GameCenterModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.GIModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.GIModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.GIModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.GridModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.GridModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.GridModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.HotReloadModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.HotReloadModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.HotReloadModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.ImageConversionModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.IMGUIModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.InputLegacyModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.InputModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.InputModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.InputModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.JSONSerializeModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.LocalizationModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.LocalizationModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.LocalizationModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.NVIDIAModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.NVIDIAModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.NVIDIAModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.ParticleSystemModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.PerformanceReportingModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.PerformanceReportingModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.PerformanceReportingModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.Physics2DModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.Physics2DModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.Physics2DModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.PhysicsModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.ProfilerModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ProfilerModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ProfilerModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.ScreenCaptureModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ScreenCaptureModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.ScreenCaptureModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.SharedInternalsModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.SharedInternalsModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.SharedInternalsModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.SpriteMaskModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.SpriteMaskModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.SpriteMaskModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.SpriteShapeModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.SpriteShapeModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.SpriteShapeModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.StreamingModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.StreamingModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.StreamingModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.SubstanceModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.SubstanceModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.SubstanceModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.SubsystemsModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.SubsystemsModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.SubsystemsModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.TerrainModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TerrainModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TerrainModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.TerrainPhysicsModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TerrainPhysicsModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TerrainPhysicsModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.TextCoreFontEngineModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TextCoreFontEngineModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TextCoreFontEngineModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.TextCoreTextEngineModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TextCoreTextEngineModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TextCoreTextEngineModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.TextRenderingModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.TilemapModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TilemapModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TilemapModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.TLSModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TLSModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.TLSModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UI">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UI.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UI.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UIElementsModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UIElementsModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UIElementsModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UIElementsNativeModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UIElementsNativeModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UIElementsNativeModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UIModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UIModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UmbraModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UmbraModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UmbraModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UNETModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UNETModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UNETModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UnityAnalyticsCommonModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityAnalyticsCommonModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityAnalyticsCommonModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UnityAnalyticsModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityAnalyticsModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityAnalyticsModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UnityConnectModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityConnectModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityConnectModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UnityCurlModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityCurlModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityCurlModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UnityTestProtocolModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityTestProtocolModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityTestProtocolModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UnityWebRequestAssetBundleModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UnityWebRequestAudioModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UnityWebRequestModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UnityWebRequestTextureModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.UnityWebRequestWWWModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.VehiclesModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.VehiclesModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.VehiclesModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.VFXModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.VFXModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.VFXModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.VideoModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.VideoModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.VideoModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.VirtualTexturingModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.VirtualTexturingModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.VirtualTexturingModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.VRModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.VRModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.VRModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.WindModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.WindModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.WindModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.XRModule">
-		  <HintPath>D:\SteamLibrary\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.XRModule.dll</HintPath>
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Against the Storm\Against the Storm_Data\Managed\UnityEngine.XRModule.dll</HintPath>
 		</Reference>
 	</ItemGroup>
   
