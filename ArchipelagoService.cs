@@ -16,6 +16,7 @@ using Eremite.View.UI;
 using Newtonsoft.Json.Linq;
 using QFSW.QC;
 using QFSW.QC.Actions;
+using Sirenix.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -909,15 +910,17 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             // Good unlock
-            if (Constants.ITEM_DICT.ContainsKey(itemName)) {
+            if (Constants.ITEM_DICT.ContainsKey(itemName))
+            {
                 string itemId = Constants.ITEM_DICT[itemName].ToName();
-                if (!HasReceivedItem(itemId)) {
-                    if (OriginalGoodIcons.Keys.Contains(itemId)) {
-                        GameMB.Settings.GetGood(itemId).icon = OriginalGoodIcons[itemId];
-                    }
-                    SO.EffectsService.GrantRawGoodProduction(itemId, Constants.PRODUCTIVITY_MODIFIER);
-                    ItemsForNews.Add((GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[itemName].ToName()), $"{itemName} unlocked!", $"{itemName} received from AP. You can now produce, gather, and obtain {itemName}."));
-                }
+                OnReceiveGood(itemName, itemId);
+                return;
+            }
+
+            // Progressive goods
+            if (Constants.PROGRESSIVE_GOODS.ContainsKey(itemName)) {
+                var howManyReceived = session.Items.AllItemsReceived.Count(itemInfo => itemInfo.ItemDisplayName == itemName);
+                OnReceiveGood(itemName, Constants.PROGRESSIVE_GOODS[itemName][howManyReceived].ToName());
                 return;
             }
 
@@ -927,8 +930,21 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
         }
 
-        // Deprecated: used by deprecated Custom Hooked Effect Model approach
-        public static IObservable<int> OnAPItemReceived(string itemName) {
+    private static void OnReceiveGood(string itemName, string itemId)
+    {
+      if (!HasReceivedItem(itemId))
+      {
+        if (OriginalGoodIcons.Keys.Contains(itemId))
+        {
+          GameMB.Settings.GetGood(itemId).icon = OriginalGoodIcons[itemId];
+        }
+        SO.EffectsService.GrantRawGoodProduction(itemId, Constants.PRODUCTIVITY_MODIFIER);
+        ItemsForNews.Add((GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[itemName].ToName()), $"{itemName} unlocked!", $"{itemName} received from AP. You can now produce, gather, and obtain {itemName}."));
+      }
+    }
+
+    // Deprecated: used by deprecated Custom Hooked Effect Model approach
+    public static IObservable<int> OnAPItemReceived(string itemName) {
             if (!itemCallbacks.ContainsKey(itemName)) {
                 itemCallbacks.Add(itemName, new Subject<int>());
             }
