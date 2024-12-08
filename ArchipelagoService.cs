@@ -94,23 +94,35 @@ namespace Ryguy9999.ATS.ATSForAP
       if (!loginResult.Successful)
       {
         LoginFailure failure = (LoginFailure)loginResult;
-        string errorMessage = $"Failed to Connect to {url} as {player}:";
-        foreach (string error in failure.Errors)
-        {
-          errorMessage += $"\n    {error}";
-        }
-        foreach (ConnectionRefusedError error in failure.ErrorCodes)
-        {
-          errorMessage += $"\n    {error}";
-        }
-
-        Plugin.Log(errorMessage);
-        GameMB.NewsService.PublishNews("Failed to connect to AP!", "The connection to the AP server failed. Check the BepInEx console for potentially more information.", AlertSeverity.Critical);
-        yield return new Value($"Failed to connect to {url} as {player}. See BepInEx console for possibly more info.");
-        yield break;
+        return HandleFailure(failure, url, player);
       }
-      LoginSuccessful loginSuccess = loginResult as LoginSuccessful;
+      else
+      {
+        LoginSuccessful loginSuccess = loginResult as LoginSuccessful;
+        return HandleSuccess(loginSuccess, url, player, password);
+      }
+    }
 
+    private static IEnumerator<ICommandAction> HandleFailure(LoginFailure failure, string url = null, string player = null)
+    {
+      string errorMessage = $"Failed to Connect to {url} as {player}:";
+      foreach (string error in failure.Errors)
+      {
+        errorMessage += $"\n    {error}";
+      }
+      foreach (ConnectionRefusedError error in failure.ErrorCodes)
+      {
+        errorMessage += $"\n    {error}";
+      }
+
+      Plugin.Log(errorMessage);
+      GameMB.NewsService.PublishNews("Failed to connect to AP!", "The connection to the AP server failed. Check the BepInEx console for potentially more information.", AlertSeverity.Critical);
+      yield return new Value($"Failed to connect to {url} as {player}. See BepInEx console for possibly more info.");
+      yield break;
+    }
+
+    private static IEnumerator<ICommandAction> HandleSuccess(LoginSuccessful loginSuccess, string url, string player, string password)
+    {
       PlayerPrefs.SetString("ap.url", url);
       PlayerPrefs.SetString("ap.slotName", player);
 
