@@ -849,6 +849,7 @@ namespace Ryguy9999.ATS.ATSForAP
 
       // Biome Victory
       var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard").Replace("Bay", "Coastal Grove").Replace("Wasteland", "Ashen Thicket");
+      // TODO(Ryguy): Explain why this check is necessary
       if (EnabledDLC || (biome != "Coastal Grove" && biome != "Ashen Thicket"))
       {
         CheckLocation("Victory - " + biome);
