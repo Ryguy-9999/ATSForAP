@@ -332,7 +332,9 @@ namespace Ryguy9999.ATS.ATSForAP
         return true;
       }
 
-      return session.Items.AllItemsReceived.Any(itemInfo => itemInfo.ItemDisplayName == part);
+      return session.Items.AllItemsReceived.Any(itemInfo => itemInfo.ItemDisplayName == part) ||
+          session.Items.AllItemsReceived.Count(itemInfo => itemInfo.ItemDisplayName == "Progressive Guardian") >
+          Constants.PROGRESSIVE_ITEMS["Progressive Guardian"].IndexOf(part);
     }
 
     public static int TotalGroveExpeditionLocationsCount()
@@ -1122,6 +1124,28 @@ namespace Ryguy9999.ATS.ATSForAP
         return;
       }
 
+      if (Constants.PROGRESSIVE_ITEMS.ContainsKey(itemName) || )
+      {
+        HandleProxyItemReceived(itemName);
+      }
+      else
+      {
+        HandleNonproxyItemReceived(itemName);
+      }
+    }
+
+    private static void HandleProxyItemReceived(string itemName)
+    {
+      // Retrieve in-game name for corresponding Progressive item
+      var howManyReceived = session.Items.AllItemsReceived.Count(itemInfo => itemInfo.ItemDisplayName == itemName);
+      // TODO(chesslogic): Check if the progression was overridden by slot data
+      if ()
+      itemName = Constants.PROGRESSIVE_ITEMS[itemName][howManyReceived - 1];
+      HandleNonproxyItemReceived(itemName);
+    }
+
+    private static void HandleNonproxyItemReceived(string itemName)
+    {
       // Guardian Part
       if (itemName.StartsWith("Guardian "))
       {
@@ -1140,15 +1164,7 @@ namespace Ryguy9999.ATS.ATSForAP
       {
         var fillerQty = Int32.Parse(match.Groups[1].ToString());
         var fillerType = match.Groups[2].ToString();
-        if (fillerType == "Villagers")
-        {
-          VillagersToSpawn += fillerQty;
-        }
-        else
-        {
-          GameMB.StorageService.Store(new Good(Constants.ITEM_DICT[fillerType].ToName(), fillerQty), StorageOperationType.Other);
-          ItemsForNews.Add((GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[fillerType].ToName()), $"{fillerQty} {fillerType} received from AP!", $"{fillerQty} {fillerType} received. You will also receive this bonus in all future settlements."));
-        }
+        ImmediatelyAddFillerItem(fillerQty, fillerType);
 
         return;
       }
@@ -1171,20 +1187,23 @@ namespace Ryguy9999.ATS.ATSForAP
         return;
       }
 
-      // Progressive goods
-      if (Constants.PROGRESSIVE_GOODS.ContainsKey(itemName))
-      {
-        var howManyReceived = session.Items.AllItemsReceived.Count(itemInfo => itemInfo.ItemDisplayName == itemName);
-        string goodsName = Constants.PROGRESSIVE_GOODS[itemName][howManyReceived - 1];
-        string itemId = Constants.ITEM_DICT[itemName].ToName();
-        OnReceiveGood(goodsName, itemId);
-        return;
-      }
-
       Plugin.Log("Warning: Received unknown item " + itemName + " from AP!");
       foreach (var b in GameMB.Settings.Buildings)
       {
         Plugin.Log(b.name);
+      }
+    }
+
+    private static void ImmediatelyAddFillerItem(int fillerQty, string fillerType)
+    {
+      if (fillerType == "Villagers")
+      {
+        VillagersToSpawn += fillerQty;
+      }
+      else
+      {
+        GameMB.StorageService.Store(new Good(Constants.ITEM_DICT[fillerType].ToName(), fillerQty), StorageOperationType.Other);
+        ItemsForNews.Add((GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[fillerType].ToName()), $"{fillerQty} {fillerType} received from AP!", $"{fillerQty} {fillerType} received. You will also receive this bonus in all future settlements."));
       }
     }
 
