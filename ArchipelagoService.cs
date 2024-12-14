@@ -333,8 +333,8 @@ namespace Ryguy9999.ATS.ATSForAP
       }
 
       return session.Items.AllItemsReceived.Any(itemInfo => itemInfo.ItemDisplayName == part) ||
-          session.Items.AllItemsReceived.Count(itemInfo => itemInfo.ItemDisplayName == "Progressive Guardian") >
-          Constants.PROGRESSIVE_ITEMS["Progressive Guardian"].IndexOf(part);
+          Constants.PROGRESSIVE_ITEMS["Progressive Guardian"].IndexOf(part) <
+          session.Items.AllItemsReceived.Count(itemInfo => itemInfo.ItemDisplayName == "Progressive Guardian");
     }
 
     public static int TotalGroveExpeditionLocationsCount()
