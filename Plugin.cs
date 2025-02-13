@@ -38,8 +38,8 @@ namespace Ryguy9999.ATS.ATSForAP
             Instance.Logger.LogInfo(s);
         }
 
-        public static void Logify(object o) {
-            Log(JsonConvert.SerializeObject(o, Formatting.None, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore }));
+        public static void Logify(object o, int maxDepth = 10) {
+            Log(JsonConvert.SerializeObject(o, Formatting.None, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore, MaxDepth = maxDepth }));
         }
 
         [HarmonyPatch(typeof(MainController), nameof(MainController.OnServicesReady))]

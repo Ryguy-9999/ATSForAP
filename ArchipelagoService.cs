@@ -100,7 +100,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             PlayerPrefs.SetString("ap.url", url);
             PlayerPrefs.SetString("ap.slotName", player);
 
-            if(GameMB.IsGameActive) {
+            if (GameMB.IsGameActive) {
                 SyncGameStateToAP();
                 if(ApConnectionNews != null) {
                     GameMB.NewsService.RemoveNews(ApConnectionNews);
@@ -434,6 +434,38 @@ namespace Ryguy9999.ATS.ATSForAP {
         }
 
         public static void EnterGame() {
+            // TODO auto disable fishing hut recipes
+            // TODO HandleSlowUpdate maybe check if RacesService.raceLookup is null?
+            // TODO save connection per profile, soft block different details if in a settlement without ap.connectForce
+            // TODO toggle for filler bypassing resource lock
+            /* TODO use this to lock icon needs
+[Info   :Ryguy9999.ATS.ATSForAP] Any Housing Icon_Need_Shelter (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Beaver Housing Icon_Need_beaverHousing (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Fox Housing Icon_Need_FoxHousing (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Frog Housing Icon_Need_FrogHousing 1 (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Harpy Housing Icon_Need_HarpyHousing (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Human Housing Icon_Need_HumanHousing (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Lizard Housing Icon_Need_LizardHousing (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Jerky
+[Info   :Ryguy9999.ATS.ATSForAP] Porridge Icon_Resource_Porridge (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Paste
+[Info   :Ryguy9999.ATS.ATSForAP] Skewer
+[Info   :Ryguy9999.ATS.ATSForAP] Biscuits
+[Info   :Ryguy9999.ATS.ATSForAP] Pie
+[Info   :Ryguy9999.ATS.ATSForAP] Pickled Goods
+[Info   :Ryguy9999.ATS.ATSForAP] Boots Icon_Resource_Boots 1 (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Clothes Icon_Resource_Coats (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Leasiure Icon_Need_Leisure (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Bloodthirst Icon_Need_Brawling (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Religion Icon_Need_Religion (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Education Icon_Need_Education (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Luxury Icon_Need_Luxury (UnityEngine.Sprite)
+[Info   :Ryguy9999.ATS.ATSForAP] Treatment Icon_Need_Treatment (UnityEngine.Sprite)
+             */
+            foreach (var n in GameMB.Settings.Needs) {
+                Plugin.Log(n.Name + " " + n.presentation.overrideIcon);
+            }
+
             if(session == null) {
                 GameMB.NewsService.PublishNews("No AP session detected! Remember to connect!", "ap.connect url:port slotName [password]", AlertSeverity.Critical);
                 ApConnectionNews = (GameMB.NewsService.News.GetType().GetProperty("Value").GetValue(GameMB.NewsService.News, null) as List<News>)[0];
@@ -899,15 +931,6 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return;
             }
 
-            // Blueprint
-            // Convert the visible AP name to the in game id, where only these few are different
-            string buildingID = GetIDFromWorkshopName(itemName);
-            if(GameMB.Settings.ContainsBuilding(buildingID)) {
-                GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(buildingID));
-                ItemsForNews.Add((null, $"{itemName} received from AP!", $"{itemName} received. You can now build this blueprint in this and all future settlements."));
-                return;
-            }
-
             // Good unlock
             if (Constants.ITEM_DICT.ContainsKey(itemName)) {
                 string itemId = Constants.ITEM_DICT[itemName].ToName();
@@ -918,6 +941,15 @@ namespace Ryguy9999.ATS.ATSForAP {
                     SO.EffectsService.GrantRawGoodProduction(itemId, Constants.PRODUCTIVITY_MODIFIER);
                     ItemsForNews.Add((GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[itemName].ToName()), $"{itemName} unlocked!", $"{itemName} received from AP. You can now produce, gather, and obtain {itemName}."));
                 }
+                return;
+            }
+
+            // Blueprint
+            // Convert the visible AP name to the in game id, where only these few are different
+            string buildingID = GetIDFromWorkshopName(itemName);
+            if(GameMB.Settings.ContainsBuilding(buildingID)) {
+                GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(buildingID));
+                ItemsForNews.Add((null, $"{itemName} BP received from AP!", $"{itemName} received. You can now build this blueprint in this and all future settlements."));
                 return;
             }
 

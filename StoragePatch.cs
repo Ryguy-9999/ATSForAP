@@ -7,6 +7,7 @@ using Eremite.Buildings;
 using Eremite.Buildings.UI.Ports;
 using Eremite.Buildings.UI.Seals;
 using Eremite.Characters.Behaviours;
+using Eremite.Controller.Generator;
 using Eremite.Model;
 using Eremite.Model.State;
 using Eremite.Services;
@@ -373,6 +374,12 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return;
             }
             ArchipelagoService.CheckLocation($"Ashen Thicket - Forge {forgeNumber}{ArchipelagoService.GetOrdinalSuffix(forgeNumber)} Cornerstone");
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(AchivsService), nameof(AchivsService.SendAchivs))]
+        private static bool SendAchievementPrefix() {
+            return false;
         }
     }
 }

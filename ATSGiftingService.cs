@@ -1,8 +1,8 @@
-﻿using Archipelago.Gifting.Net.Gifts;
-using Archipelago.Gifting.Net.Gifts.Versions.Current;
-using Archipelago.Gifting.Net.Service;
+﻿using Archipelago.Gifting.Net.Service;
 using Archipelago.Gifting.Net.Traits;
 using Archipelago.Gifting.Net.Utilities.CloseTraitParser;
+using Archipelago.Gifting.Net.Versioning.Gifts;
+using Archipelago.Gifting.Net.Versioning.Gifts.Current;
 using Archipelago.MultiClient.Net;
 using ATS_API.Helpers;
 using Eremite;
@@ -19,70 +19,70 @@ namespace Ryguy9999.ATS.ATSForAP {
         static ICloseTraitParser<string> giftTraitParser = new BKTreeCloseTraitParser<string>();
         static GiftingService giftingService = null;
         static Dictionary<string, GiftTrait[]> giftTagDictionary = new Dictionary<string, GiftTrait[]> {
-            ["Wood"] = new GiftTrait[] { new GiftTrait("Wood", 1, 1), new GiftTrait("Material", 1, 1), new GiftTrait("Fuel", 1, 1) },
-            ["Berry"] = new GiftTrait[] { new GiftTrait("Berry", 1, 1), new GiftTrait("Fruit", 1, 1), new GiftTrait("Food", 1, 1) },
-            ["Egg"] = new GiftTrait[] { new GiftTrait("Egg", 1, 1), new GiftTrait("Food", 1, 1) },
-            ["Insect"] = new GiftTrait[] { new GiftTrait("Insect", 1, 1), new GiftTrait("Food", 1, 1) },
-            ["Meat"] = new GiftTrait[] { new GiftTrait("Meat", 1, 1), new GiftTrait("Food", 1, 1) },
-            ["Mushroom"] = new GiftTrait[] { new GiftTrait("Mushroom", 1, 1), new GiftTrait("Food", 1, 1) },
-            ["Root"] = new GiftTrait[] { new GiftTrait("Root", 1, 1), new GiftTrait("Food", 1, 1) },
-            ["Vegetable"] = new GiftTrait[] { new GiftTrait("Vegetable", 1, 1), new GiftTrait("Food", 1, 1) },
-            ["Fish"] = new GiftTrait[] { new GiftTrait("Fish", 1, 1), new GiftTrait("Food", 1, 1) },
-            ["Biscuit"] = new GiftTrait[] { new GiftTrait("Cooking", 1, 1), new GiftTrait("Food", 1, 2) },
-            ["Jerky"] = new GiftTrait[] { new GiftTrait("Meat", 1, 1), new GiftTrait("Cooking", 1, 1), new GiftTrait("Food", 1, 2) },
-            ["Pickled Good"] = new GiftTrait[] { new GiftTrait("Pickle", 1, 1), new GiftTrait("Cooking", 1, 1), new GiftTrait("Food", 1, 2) },
-            ["Pie"] = new GiftTrait[] { new GiftTrait("Cooking", 1, 1), new GiftTrait("Food", 1, 2) },
-            ["Porridge"] = new GiftTrait[] { new GiftTrait("Cooking", 1, 1), new GiftTrait("Food", 1, 2) },
-            ["Skewer"] = new GiftTrait[] { new GiftTrait("Cooking", 1, 1), new GiftTrait("Food", 1, 2) },
-            ["Paste"] = new GiftTrait[] { new GiftTrait("Cooking", 1, 1), new GiftTrait("Food", 1, 2) },
-            ["Coat"] = new GiftTrait[] { new GiftTrait("Cloth", 1, 1), new GiftTrait("Clothing", 1, 1) },
-            ["Boot"] = new GiftTrait[] { new GiftTrait("Leather", 1, 1), new GiftTrait("Clothing", 1, 1) },
-            ["Brick"] = new GiftTrait[] { new GiftTrait("Stone", 1, 2), new GiftTrait("Material", 1, 2) },
-            ["Fabric"] = new GiftTrait[] { new GiftTrait("Cloth", 1, 1), new GiftTrait("Material", 1, 2) },
-            ["Plank"] = new GiftTrait[] { new GiftTrait("Lumber", 1, 1), new GiftTrait("Wood", 1, 2), new GiftTrait("Material", 1, 2) },
-            ["Pipe"] = new GiftTrait[] { new GiftTrait("Pipe", 1, 1), new GiftTrait("Metal", 1, 1) },
-            ["Part"] = new GiftTrait[] { new GiftTrait("Gear", 1, 3) },
-            ["Wildfire Essence"] = new GiftTrait[] { new GiftTrait("Fire", 1, 3) },
-            ["Ale"] = new GiftTrait[] { new GiftTrait("Alcohol", 1, 1), new GiftTrait("Root", 1, 1), new GiftTrait("Luxury", 1, 1) },
-            ["Incense"] = new GiftTrait[] { new GiftTrait("Luxury", 1, 1) },
-            ["Scroll"] = new GiftTrait[] { new GiftTrait("Scroll", 1, 1), new GiftTrait("Luxury", 1, 1) },
-            ["Tea"] = new GiftTrait[] { new GiftTrait("Coffee", 1, 1), new GiftTrait("Luxury", 1, 1) },
-            ["Training Gear"] = new GiftTrait[] { new GiftTrait("Weapon", 1, 1), new GiftTrait("Luxury", 1, 1) },
-            ["Wine"] = new GiftTrait[] { new GiftTrait("Alcohol", 1, 1), new GiftTrait("Fruit", 1, 1), new GiftTrait("Luxury", 1, 1) },
-            ["Clay"] = new GiftTrait[] { new GiftTrait("Clay", 1, 1), new GiftTrait("Material", 1, 1) },
-            ["Copper Ore"] = new GiftTrait[] { new GiftTrait("Ore", 1, 1), new GiftTrait("Copper", 1, 0.5), new GiftTrait("Metal", 1, 0.5), new GiftTrait("Material", 1, 1) },
-            ["Scale"] = new GiftTrait[] { new GiftTrait("Material", 1, 1), new GiftTrait("Ore", 1, 0.1), new GiftTrait("Copper", 1, 0.1) },
-            ["Crystallized Dew"] = new GiftTrait[] { new GiftTrait("Metal", 1, 1), new GiftTrait("Material", 1, 1) },
-            ["Grain"] = new GiftTrait[] { new GiftTrait("Grain", 1, 1) },
-            ["Herb"] = new GiftTrait[] { new GiftTrait("Herb", 1, 1) },
-            ["Leather"] = new GiftTrait[] { new GiftTrait("Leather", 1, 1), new GiftTrait("Material", 1, 1) },
-            ["Plant Fiber"] = new GiftTrait[] { new GiftTrait("Fiber", 1, 1), new GiftTrait("Material", 1, 1) },
-            ["Algae"] = new GiftTrait[] { new GiftTrait("Algae", 1, 1), new GiftTrait("Material", 1, 1) },
-            ["Reed"] = new GiftTrait[] { new GiftTrait("Material", 1, 1) },
-            ["Resin"] = new GiftTrait[] { new GiftTrait("Material", 1, 1), new GiftTrait("Amber", 1, 0.1) },
-            ["Stone"] = new GiftTrait[] { new GiftTrait("Stone", 1, 1), new GiftTrait("Material", 1, 1) },
-            ["Salt"] = new GiftTrait[] { new GiftTrait("Salted", 1, 1), new GiftTrait("Mineral", 1, 1), new GiftTrait("Material", 1, 1) },
-            ["Barrel"] = new GiftTrait[] { new GiftTrait("Container", 1, 1) },
-            ["Copper Bar"] = new GiftTrait[] { new GiftTrait("Metal", 1, 1), new GiftTrait("Copper", 1, 1), new GiftTrait("Material", 1, 1) },
-            ["Flour"] = new GiftTrait[] { new GiftTrait("Flour", 1, 1) },
-            ["Dye"] = new GiftTrait[] { new GiftTrait("Dye", 1, 1), new GiftTrait("Material", 1, 1) },
-            ["Pottery"] = new GiftTrait[] { new GiftTrait("Ceramic", 1, 1), new GiftTrait("Container", 1, 1) },
-            ["Waterskin"] = new GiftTrait[] { new GiftTrait("Container", 1, 1) },
-            ["Amber"] = new GiftTrait[] { new GiftTrait("Amber", 1, 1), new GiftTrait("Currency", 1, 1), new GiftTrait("Gem", 1, 1) },
-            ["Pack of Building Materials"] = new GiftTrait[] { new GiftTrait("Pack", 1, 1) },
-            ["Pack of Crops"] = new GiftTrait[] { new GiftTrait("Pack", 1, 1) },
-            ["Pack of Luxury Goods"] = new GiftTrait[] { new GiftTrait("Pack", 1, 1) },
-            ["Pack of Provisions"] = new GiftTrait[] { new GiftTrait("Pack", 1, 1) },
-            ["Pack of Trade Goods"] = new GiftTrait[] { new GiftTrait("Pack", 1, 1) },
-            ["Ancient Tablet"] = new GiftTrait[] { new GiftTrait("Ancient", 1, 1), new GiftTrait("Artifact", 1, 1) },
-            ["Coal"] = new GiftTrait[] { new GiftTrait("Coal", 1, 1), new GiftTrait("Fuel", 1, 3) },
-            ["Oil"] = new GiftTrait[] { new GiftTrait("Oil", 1, 1), new GiftTrait("Fuel", 1, 2) },
-            ["Purging Fire"] = new GiftTrait[] { new GiftTrait("Fire", 1, 1) },
-            ["Sea Marrow"] = new GiftTrait[] { new GiftTrait("Fossil", 1, 1), new GiftTrait("Fuel", 1, 3) },
-            ["Tool"] = new GiftTrait[] { new GiftTrait("Tool", 1, 1) },
-            ["Drizzle Water"] = new GiftTrait[] { new GiftTrait("Water", 1, 1), new GiftTrait("Green", 1, 0.1) },
-            ["Clearance Water"] = new GiftTrait[] { new GiftTrait("Water", 1, 1), new GiftTrait("Yellow", 1, 0.1) },
-            ["Storm Water"] = new GiftTrait[] { new GiftTrait("Water", 1, 1), new GiftTrait("Blue", 1, 0.1) },
+            ["Wood"] = new GiftTrait[] { new GiftTrait("Wood"), new GiftTrait("Material"), new GiftTrait("Fuel") },
+            ["Berry"] = new GiftTrait[] { new GiftTrait("Berry"), new GiftTrait("Fruit"), new GiftTrait("Food") },
+            ["Egg"] = new GiftTrait[] { new GiftTrait("Egg"), new GiftTrait("Food") },
+            ["Insect"] = new GiftTrait[] { new GiftTrait("Insect"), new GiftTrait("Food") },
+            ["Meat"] = new GiftTrait[] { new GiftTrait("Meat"), new GiftTrait("Food") },
+            ["Mushroom"] = new GiftTrait[] { new GiftTrait("Mushroom"), new GiftTrait("Food") },
+            ["Root"] = new GiftTrait[] { new GiftTrait("Root"), new GiftTrait("Food") },
+            ["Vegetable"] = new GiftTrait[] { new GiftTrait("Vegetable"), new GiftTrait("Food") },
+            ["Fish"] = new GiftTrait[] { new GiftTrait("Fish"), new GiftTrait("Food") },
+            ["Biscuit"] = new GiftTrait[] { new GiftTrait("Cooking"), new GiftTrait("Food", 2) },
+            ["Jerky"] = new GiftTrait[] { new GiftTrait("Meat"), new GiftTrait("Cooking"), new GiftTrait("Food", 2) },
+            ["Pickled Good"] = new GiftTrait[] { new GiftTrait("Pickle"), new GiftTrait("Cooking"), new GiftTrait("Food", 2) },
+            ["Pie"] = new GiftTrait[] { new GiftTrait("Cooking"), new GiftTrait("Food", 2) },
+            ["Porridge"] = new GiftTrait[] { new GiftTrait("Cooking"), new GiftTrait("Food", 2) },
+            ["Skewer"] = new GiftTrait[] { new GiftTrait("Cooking"), new GiftTrait("Food", 2) },
+            ["Paste"] = new GiftTrait[] { new GiftTrait("Cooking"), new GiftTrait("Food", 2) },
+            ["Coat"] = new GiftTrait[] { new GiftTrait("Cloth"), new GiftTrait("Clothing") },
+            ["Boot"] = new GiftTrait[] { new GiftTrait("Leather"), new GiftTrait("Clothing") },
+            ["Brick"] = new GiftTrait[] { new GiftTrait("Stone", 2), new GiftTrait("Material", 2) },
+            ["Fabric"] = new GiftTrait[] { new GiftTrait("Cloth"), new GiftTrait("Material", 2) },
+            ["Plank"] = new GiftTrait[] { new GiftTrait("Lumber"), new GiftTrait("Wood", 2), new GiftTrait("Material", 2) },
+            ["Pipe"] = new GiftTrait[] { new GiftTrait("Pipe"), new GiftTrait("Metal") },
+            ["Part"] = new GiftTrait[] { new GiftTrait("Gear", 3) },
+            ["Wildfire Essence"] = new GiftTrait[] { new GiftTrait("Fire", 3) },
+            ["Ale"] = new GiftTrait[] { new GiftTrait("Alcohol"), new GiftTrait("Root"), new GiftTrait("Luxury") },
+            ["Incense"] = new GiftTrait[] { new GiftTrait("Luxury") },
+            ["Scroll"] = new GiftTrait[] { new GiftTrait("Scroll"), new GiftTrait("Luxury") },
+            ["Tea"] = new GiftTrait[] { new GiftTrait("Coffee"), new GiftTrait("Luxury") },
+            ["Training Gear"] = new GiftTrait[] { new GiftTrait("Weapon"), new GiftTrait("Luxury") },
+            ["Wine"] = new GiftTrait[] { new GiftTrait("Alcohol"), new GiftTrait("Fruit"), new GiftTrait("Luxury") },
+            ["Clay"] = new GiftTrait[] { new GiftTrait("Clay"), new GiftTrait("Material") },
+            ["Copper Ore"] = new GiftTrait[] { new GiftTrait("Ore"), new GiftTrait("Copper", 0.5), new GiftTrait("Metal", 0.5), new GiftTrait("Material") },
+            ["Scale"] = new GiftTrait[] { new GiftTrait("Material"), new GiftTrait("Ore", 0.1), new GiftTrait("Copper", 0.1) },
+            ["Crystallized Dew"] = new GiftTrait[] { new GiftTrait("Metal"), new GiftTrait("Material") },
+            ["Grain"] = new GiftTrait[] { new GiftTrait("Grain") },
+            ["Herb"] = new GiftTrait[] { new GiftTrait("Herb") },
+            ["Leather"] = new GiftTrait[] { new GiftTrait("Leather"), new GiftTrait("Material") },
+            ["Plant Fiber"] = new GiftTrait[] { new GiftTrait("Fiber"), new GiftTrait("Material") },
+            ["Algae"] = new GiftTrait[] { new GiftTrait("Algae"), new GiftTrait("Material") },
+            ["Reed"] = new GiftTrait[] { new GiftTrait("Material") },
+            ["Resin"] = new GiftTrait[] { new GiftTrait("Material"), new GiftTrait("Amber", 0.1) },
+            ["Stone"] = new GiftTrait[] { new GiftTrait("Stone"), new GiftTrait("Material") },
+            ["Salt"] = new GiftTrait[] { new GiftTrait("Salted"), new GiftTrait("Mineral"), new GiftTrait("Material") },
+            ["Barrel"] = new GiftTrait[] { new GiftTrait("Container") },
+            ["Copper Bar"] = new GiftTrait[] { new GiftTrait("Metal"), new GiftTrait("Copper"), new GiftTrait("Material") },
+            ["Flour"] = new GiftTrait[] { new GiftTrait("Flour") },
+            ["Dye"] = new GiftTrait[] { new GiftTrait("Dye"), new GiftTrait("Material") },
+            ["Pottery"] = new GiftTrait[] { new GiftTrait("Ceramic"), new GiftTrait("Container") },
+            ["Waterskin"] = new GiftTrait[] { new GiftTrait("Container") },
+            ["Amber"] = new GiftTrait[] { new GiftTrait("Amber"), new GiftTrait("Currency"), new GiftTrait("Gem") },
+            ["Pack of Building Materials"] = new GiftTrait[] { new GiftTrait("Pack") },
+            ["Pack of Crops"] = new GiftTrait[] { new GiftTrait("Pack") },
+            ["Pack of Luxury Goods"] = new GiftTrait[] { new GiftTrait("Pack") },
+            ["Pack of Provisions"] = new GiftTrait[] { new GiftTrait("Pack") },
+            ["Pack of Trade Goods"] = new GiftTrait[] { new GiftTrait("Pack") },
+            ["Ancient Tablet"] = new GiftTrait[] { new GiftTrait("Ancient"), new GiftTrait("Artifact") },
+            ["Coal"] = new GiftTrait[] { new GiftTrait("Coal"), new GiftTrait("Fuel", 3) },
+            ["Oil"] = new GiftTrait[] { new GiftTrait("Oil"), new GiftTrait("Fuel", 2) },
+            ["Purging Fire"] = new GiftTrait[] { new GiftTrait("Fire") },
+            ["Sea Marrow"] = new GiftTrait[] { new GiftTrait("Fossil"), new GiftTrait("Fuel", 3) },
+            ["Tool"] = new GiftTrait[] { new GiftTrait("Tool") },
+            ["Drizzle Water"] = new GiftTrait[] { new GiftTrait("Water"), new GiftTrait("Green", 0.1) },
+            ["Clearance Water"] = new GiftTrait[] { new GiftTrait("Water"), new GiftTrait("Yellow", 0.1) },
+            ["Storm Water"] = new GiftTrait[] { new GiftTrait("Water"), new GiftTrait("Blue", 0.1) },
         };
         static Dictionary<string, string> giftNames = new Dictionary<string, string> {
             [GoodsTypes.Mat_Raw_Wood.ToName()] = "Wood",
@@ -155,8 +155,9 @@ namespace Ryguy9999.ATS.ATSForAP {
             giftingService = new GiftingService(session);
             giftingService.OpenGiftBox();
             giftingService.SubscribeToNewGifts(new Action<Dictionary<string, Gift>>(HandleNewGifts));
-            if(GameMB.IsGameActive) {
-                HandleNewGifts(giftingService.GetAllGiftsAndEmptyGiftbox());
+            giftingService.OnNewGift += HandleNewGifts;
+            if (GameMB.IsGameActive) {
+                HandleNewGifts(giftingService.GetAllGiftsAndEmptyGiftBox());
             }
 
             foreach (var item in giftTagDictionary) {
@@ -166,12 +167,12 @@ namespace Ryguy9999.ATS.ATSForAP {
 
         public static void EnterGame() {
             if(giftingService != null) {
-                HandleNewGifts(giftingService.GetAllGiftsAndEmptyGiftbox());
+                HandleNewGifts(giftingService.GetAllGiftsAndEmptyGiftBox());
             }
         }
 
         private static void HandleNewGifts(Dictionary<string, Gift> gifts) {
-            if(!GameMB.IsGameActive) {
+            if (!GameMB.IsGameActive) {
                 return;
             }
 
@@ -180,8 +181,40 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
         }
 
+        private static void HandleNewGifts(Gift gift) {
+            if (!GameMB.IsGameActive) {
+                return;
+            }
+
+            HandleGift(gift);
+        }
+
         private static void HandleGift(string giftId, Gift gift) {
             Plugin.Log($"Incoming AP gift: \"{gift.ItemName}\" ({gift.Amount}). id: {giftId}");
+
+            string goodsGiftedId = null;
+            goodsGiftedId = HandleSpecialCaseGift(gift);
+            if (goodsGiftedId != null) {
+                ReceiveGoods(goodsGiftedId, gift);
+                return;
+            }
+            goodsGiftedId = HandleStringContainsGift(gift);
+            if (goodsGiftedId != null) {
+                ReceiveGoods(goodsGiftedId, gift);
+                return;
+            }
+            goodsGiftedId = HandleGiftTagGift(gift);
+            if (goodsGiftedId != null) {
+                ReceiveGoods(goodsGiftedId, gift);
+                return;
+            }
+
+            Plugin.Log($"Failed to process gift \"{gift.ItemName}\" ({gift.Amount}) with tags [{String.Join(", ", gift.Traits.Select(trait => trait.Trait))}]");
+            giftingService.RefundGift(gift);
+        }
+
+        private static void HandleGift(Gift gift) {
+            Plugin.Log($"Incoming AP gift: \"{gift.ItemName}\" ({gift.Amount}).");
 
             string goodsGiftedId = null;
             goodsGiftedId = HandleSpecialCaseGift(gift);
@@ -270,7 +303,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                 resourceId = resourceToGift;
             }
 
-            if(!giftingService.CanGiftToPlayer(player, giftTagDictionary[giftNames[resourceId]].Select(trait => trait.Trait))) {
+            if(!giftingService.CanGiftToPlayer(player, giftTagDictionary[giftNames[resourceId]].Select(trait => trait.Trait)).CanGift) {
                 yield return new Value($"Cannot gift to {player}. Maybe their giftbox isn't open or their game can't accept {resourceToGift}.");
                 yield break;
             }
