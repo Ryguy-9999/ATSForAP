@@ -65,11 +65,26 @@ namespace Ryguy9999.ATS.ATSForAP {
             ["Sea Marrow"] = GoodsTypes.Crafting_Sea_Marrow,
             ["Tools"] = GoodsTypes.Tools_Simple_Tools,
         };
+        public static Dictionary<string, string> SERVICE_MAPPING = new Dictionary<string, string> {
+            ["Jerky"] = "Jerky",
+            ["Porridge"] = "Jerky",
+            ["Paste"] = "Jerky",
+            ["Skewer"] = "Jerky",
+            ["Biscuits"] = "Jerky",
+            ["Pie"] = "Jerky",
+            ["Pickled Goods"] = "Jerky",
+            ["Boots"] = "Jerky",
+            ["Coats"] = "Clothes",
+            ["Ale"] = "Leasiure",
+            ["Training Gear"] = "Bloodthirst",
+            ["Incense"] = "Religion",
+            ["Scrolls"] = "Education",
+            ["Wine"] = "Luxury",
+            ["Tea"] = "Treatment",
+        };
         public const int PRODUCTIVITY_MODIFIER = 999999;
         public const int TRADE_TOWN_ID = 9999;
         public const string SCOUT_STRING_PREFIX = "[AP Scout]";
-        public const string AP_PROD_EFFECT_NAME = "_AP_ProductionBlocker";
-        public const string AP_PROD_EFFECT_CONTROL_NAME = "_AP_ProductionControl";
         public const string AP_GAME_NAME = "Against the Storm";
         public const long RECIPE_SHUFFLE_VANILLA = 0;
         public const long RECIPE_SHUFFLE_EXCLUDE_CRUDE_WS_AND_MS_POST = 1;

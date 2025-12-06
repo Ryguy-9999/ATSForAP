@@ -7,6 +7,7 @@ using Archipelago.MultiClient.Net;
 using ATS_API.Helpers;
 using Eremite;
 using Eremite.Model;
+using Eremite.Services.Monitors;
 using QFSW.QC;
 using QFSW.QC.Actions;
 using System;
@@ -154,10 +155,9 @@ namespace Ryguy9999.ATS.ATSForAP {
         public static void InitializeGifting(ArchipelagoSession session) {
             giftingService = new GiftingService(session);
             giftingService.OpenGiftBox();
-            giftingService.SubscribeToNewGifts(new Action<Dictionary<string, Gift>>(HandleNewGifts));
-            giftingService.OnNewGift += HandleNewGifts;
+            giftingService.OnNewGift += HandleGift;
             if (GameMB.IsGameActive) {
-                HandleNewGifts(giftingService.GetAllGiftsAndEmptyGiftBox());
+                HandleAllNewGifts(giftingService.GetAllGiftsAndEmptyGiftBox());
             }
 
             foreach (var item in giftTagDictionary) {
@@ -167,50 +167,18 @@ namespace Ryguy9999.ATS.ATSForAP {
 
         public static void EnterGame() {
             if(giftingService != null) {
-                HandleNewGifts(giftingService.GetAllGiftsAndEmptyGiftBox());
+                HandleAllNewGifts(giftingService.GetAllGiftsAndEmptyGiftBox());
             }
         }
 
-        private static void HandleNewGifts(Dictionary<string, Gift> gifts) {
+        private static void HandleAllNewGifts(Dictionary<string, Gift> gifts) {
             if (!GameMB.IsGameActive) {
                 return;
             }
 
             foreach (var gift in gifts) {
-                HandleGift(gift.Key, gift.Value);
+                HandleGift(gift.Value);
             }
-        }
-
-        private static void HandleNewGifts(Gift gift) {
-            if (!GameMB.IsGameActive) {
-                return;
-            }
-
-            HandleGift(gift);
-        }
-
-        private static void HandleGift(string giftId, Gift gift) {
-            Plugin.Log($"Incoming AP gift: \"{gift.ItemName}\" ({gift.Amount}). id: {giftId}");
-
-            string goodsGiftedId = null;
-            goodsGiftedId = HandleSpecialCaseGift(gift);
-            if (goodsGiftedId != null) {
-                ReceiveGoods(goodsGiftedId, gift);
-                return;
-            }
-            goodsGiftedId = HandleStringContainsGift(gift);
-            if (goodsGiftedId != null) {
-                ReceiveGoods(goodsGiftedId, gift);
-                return;
-            }
-            goodsGiftedId = HandleGiftTagGift(gift);
-            if (goodsGiftedId != null) {
-                ReceiveGoods(goodsGiftedId, gift);
-                return;
-            }
-
-            Plugin.Log($"Failed to process gift \"{gift.ItemName}\" ({gift.Amount}) with tags [{String.Join(", ", gift.Traits.Select(trait => trait.Trait))}]");
-            giftingService.RefundGift(gift);
         }
 
         private static void HandleGift(Gift gift) {
@@ -238,7 +206,9 @@ namespace Ryguy9999.ATS.ATSForAP {
         }
 
         private static void ReceiveGoods(string goodsId, Gift gift) {
-            ArchipelagoService.ItemsForNews.Add((null, "You received a gift through AP!", $"{gift.Amount} {gift.ItemName} received from {ArchipelagoService.session.Players.GetPlayerAlias(gift.SenderSlot)}!"));
+            ArchipelagoService.UnityLambdaQueue.Add(() => {
+                GameMB.NewsService.PublishNews("You received a gift through AP!", $"{gift.Amount} {giftNames[goodsId]} received from {ArchipelagoService.session.Players.GetPlayerAlias(gift.SenderSlot)}!", AlertSeverity.Info, null);
+            });
             GameMB.StorageService.Store(new Good(goodsId, gift.Amount), StorageOperationType.Other);
             giftingService.RemoveGiftFromGiftBox(gift.ID);
         }

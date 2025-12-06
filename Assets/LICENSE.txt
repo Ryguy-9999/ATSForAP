@@ -1,0 +1,5 @@
+﻿The AP Logo is licensed under CC BY 4.0.
+License link: https://creativecommons.org/licenses/by/4.0/
+
+The logo has been modified to appear overlayed on a lock icon for game display purposes.
+It has additionally been modified to appear in a shaded button to match the game's design.

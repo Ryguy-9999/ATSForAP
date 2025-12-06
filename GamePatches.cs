@@ -7,14 +7,20 @@ using Eremite.Buildings;
 using Eremite.Buildings.UI.Ports;
 using Eremite.Buildings.UI.Seals;
 using Eremite.Characters.Behaviours;
+using Eremite.Characters.Villagers;
 using Eremite.Controller.Generator;
 using Eremite.Model;
+using Eremite.Model.Sound;
 using Eremite.Model.State;
 using Eremite.Services;
+using Eremite.View;
 using Eremite.View.HUD;
 using Eremite.View.HUD.Reputation;
 using Eremite.View.HUD.TradeRoutes;
 using Eremite.View.Menu;
+using Eremite.View.Menu.Pick;
+using Eremite.WorldMap;
+using Eremite.WorldMap.UI;
 using Eremite.WorldMap.UI.CustomGames;
 using HarmonyLib;
 using System;
@@ -22,9 +28,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Ryguy9999.ATS.ATSForAP {
-    class StoragePatch {
+    class GamePatches {
         [HarmonyPrefix]
         [HarmonyPatch(typeof(StorageService), nameof(StorageService.Store))]
         [HarmonyPatch(new Type[] { typeof(Good), typeof(string), typeof(int), typeof(StorageOperationType) })]
@@ -58,7 +65,16 @@ namespace Ryguy9999.ATS.ATSForAP {
         [HarmonyPatch(typeof(GathererHut), nameof(GathererHut.SetUp))]
         [HarmonyPatch(new Type[] { typeof(GathererHutModel), typeof(GathererHutState) })]
         private static void CampSetUpPostfix(GathererHut __instance, GathererHutModel model, GathererHutState state) {
-            foreach(var recipe in __instance.state.recipes) {
+            foreach (var recipe in __instance.state.recipes) {
+                recipe.active = recipe.active && ArchipelagoService.HasReceivedItem(GameMB.Settings.GetRecipe(recipe.model).GetProducedGood());
+            }
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(FishingHut), nameof(FishingHut.SetUp))]
+        [HarmonyPatch(new Type[] { typeof(FishingHutModel), typeof(FishingHutState) })]
+        private static void FishingHutSetUpPostfix(GathererHut __instance, FishingHutModel model, FishingHutState state) {
+            foreach (var recipe in __instance.state.recipes) {
                 recipe.active = recipe.active && ArchipelagoService.HasReceivedItem(GameMB.Settings.GetRecipe(recipe.model).GetProducedGood());
             }
         }
@@ -350,7 +366,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                 if(expeditionNumber < 0) {
                     return true;
                 }
-                ArchipelagoService.CheckLocation($"Coastal Grove - {expeditionNumber}{ArchipelagoService.GetOrdinalSuffix(expeditionNumber)} Expedition");
+                ArchipelagoService.CheckLocation($"Coastal Grove - {expeditionNumber}{Utils.GetOrdinalSuffix(expeditionNumber)} Expedition");
                 return false;
             }
             return true;
@@ -373,13 +389,56 @@ namespace Ryguy9999.ATS.ATSForAP {
             if(forgeNumber < 0) {
                 return;
             }
-            ArchipelagoService.CheckLocation($"Ashen Thicket - Forge {forgeNumber}{ArchipelagoService.GetOrdinalSuffix(forgeNumber)} Cornerstone");
+            ArchipelagoService.CheckLocation($"Ashen Thicket - Forge {forgeNumber}{Utils.GetOrdinalSuffix(forgeNumber)} Cornerstone");
         }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(AchivsService), nameof(AchivsService.SendAchivs))]
         private static bool SendAchievementPrefix() {
             return false;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(Villager), nameof(Villager.Die))]
+        [HarmonyPatch(new Type[] { typeof(VillagerLossType), typeof(string), typeof(bool), typeof(float), typeof(SoundModel) })]
+        private static void DiePostfix(VillagerLossType lossType, string reasonKey, bool showDying = true, float duration = 25f, SoundModel extraSound = null) {
+            ArchipelagoService.HandleVillagerDeath(lossType, reasonKey);
+        }
+
+        private static CustomGamePopup customGamePopupInstance;
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CustomGamePopup), nameof(CustomGamePopup.Show))]
+        private static void CustomGameShowPostfix(CustomGamePopup __instance) {
+            customGamePopupInstance = __instance;
+            __instance.embarkButton.interactable = ArchipelagoService.HasReceivedBiome(Utils.GetBiomeNameFromID(__instance.biomePanel.GetBiome().Name));
+            __instance.biomePanel.dropdown.onValueChanged.AddListener(new UnityAction<int>(OnBiomeValueChanged));
+        }
+        private static void OnBiomeValueChanged(int value) {
+            customGamePopupInstance.embarkButton.interactable = ArchipelagoService.HasReceivedBiome(Utils.GetBiomeNameFromID(customGamePopupInstance.biomePanel.GetBiome().Name));
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(CustomGameBiomePanel), nameof(CustomGameBiomePanel.CanBiomeBePicked))]
+        [HarmonyPatch(new Type[] { typeof(BiomeModel) })]
+        private static bool CustomGameBiomeCanBePickedPrefix(CustomGameBiomePanel __instance, BiomeModel biome, ref bool __result) {
+            if(!ArchipelagoService.HasReceivedBiome(Utils.GetBiomeNameFromID(biome.Name))) {
+                __result = false;
+                return false;
+            }
+
+            return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(BuildingsPickScreen), nameof(BuildingsPickScreen.UpdateConfirmButton))]
+        private static bool EmbarkScreenShowPostfix(BuildingsPickScreen __instance) {
+            bool HasUnlocked = ArchipelagoService.HasReceivedBiome(Utils.GetBiomeNameFromID(__instance.field.Biome.Name));
+            if(!HasUnlocked) {
+                __instance.confirmButton.CanInteract = false;
+                return false;
+            }
+
+            return true;
         }
     }
 }

@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Ryguy9999.ATS.ATSForAP</AssemblyName>
     <Description>AP Mod for Against The Storm - by Ryguy9999</Description>
-    <Version>0.9.5</Version>
+    <Version>1.1.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <StormPath>D:\\SteamLibrary\\steamapps\\common\\Against the Storm</StormPath>
@@ -18,8 +18,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Archipelago.Gifting.Net" Version="0.4.2" />
-    <PackageReference Include="Archipelago.MultiClient.Net" Version="6.5.0" />
+    <PackageReference Include="Archipelago.Gifting.Net" Version="0.4.3" />
+    <PackageReference Include="Archipelago.MultiClient.Net" Version="6.6.0" />
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
@@ -395,6 +395,9 @@
     <None Update="Assets\good-locked.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\good-locked2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <Target Name="Deploy" AfterTargets="Build">
@@ -406,5 +409,6 @@
     <Copy SourceFiles="@(Assembly)" DestinationFolder="$(BepInExPath)\BepInEx\plugins" />
     <Copy SourceFiles="@(Assets)" DestinationFolder="$(BepInExPath)\BepInEx\plugins\assets\" />
     <Copy SourceFiles="$(OutputPath)\Archipelago.MultiClient.Net.dll" DestinationFolder="$(BepInExPath)\BepInEx\plugins" />
+    <Copy SourceFiles="@(Assembly)" DestinationFolder="C:\Users\ryanc\Desktop\ATS_for_AP" />
   </Target>
 </Project>

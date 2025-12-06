@@ -12,7 +12,6 @@ using Eremite.Model.Orders;
 using Eremite.Model.State;
 using Eremite.Services;
 using Eremite.Services.Monitors;
-using Eremite.View.UI;
 using Newtonsoft.Json.Linq;
 using QFSW.QC;
 using QFSW.QC.Actions;
@@ -33,43 +32,72 @@ namespace Ryguy9999.ATS.ATSForAP {
         private static List<IDisposable> GameSubscriptions = new List<IDisposable>();
         private static Queue<string> LocationQueue = new Queue<string>();
         private static Dictionary<string, Sprite> OriginalGoodIcons = new Dictionary<string, Sprite>();
+        private static Sprite lockedGoodSprite;
         private static bool ShowAPLockIcons = true;
-        public static List<(Sprite icon, string message, string detail)> ItemsForNews = new List<(Sprite icon, string message, string detail)>();
+        private static bool ShowLocationAlerts = true;
+        public static List<Action> UnityLambdaQueue = new List<Action>();
         private static int VillagersToSpawn = 0;
         private static News ApConnectionNews;
         private static List<int> ReputationLocationIndices = new List<int>();
 
-        public static bool EnabledDLC = false;
+        private static bool EnableBiomeKeys = false;
+        public static bool EnabledKeepersDLC = false;
+        public static bool EnabledNightwatchersDLC = false;
         public static bool PreventNaturalBPSelection = false;
         public static int RequiredSealTasks = 1;
         public static bool RequiredGuardianParts = false;
         public static Dictionary<string, ScoutedItemInfo> LocationScouts = new Dictionary<string, ScoutedItemInfo>();
 
-        [Command("ap.sendLocation", "For debugging purposes. Sends a location.", Platform.AllPlatforms, MonoTargetType.Single)]
-        public static void SendLocation(string location) {
-            CheckLocation(location);
-        }
-
         [Command("ap.c", "Connects to Archipelago server, using most recently used url:port and slotName. Still takes optional password.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static IEnumerator<ICommandAction> InitializeAPConnectionShortcut() {
-            return InitializeAPConnection(PlayerPrefs.GetString("ap.url"), PlayerPrefs.GetString("ap.slotName"), null);
+            string savedUrl = PlayerPrefs.GetString($"ap.url.{GameMB.ProfilesService.GetProfileDisplayName()}");
+            string savedSlot = PlayerPrefs.GetString($"ap.slotName.{GameMB.ProfilesService.GetProfileDisplayName()}");
+
+            return InitializeAPConnection(savedUrl, savedSlot, null);
         }
 
         [Command("ap.c", "Connects to Archipelago server, using most recently used url:port and slotName. Still takes optional password.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static IEnumerator<ICommandAction> InitializeAPConnectionShortcut(string password) {
-            return InitializeAPConnection(PlayerPrefs.GetString("ap.url"), PlayerPrefs.GetString("ap.slotName"), password);
+            string savedUrl = PlayerPrefs.GetString($"ap.url.{GameMB.ProfilesService.GetProfileDisplayName()}");
+            string savedSlot = PlayerPrefs.GetString($"ap.slotName.{GameMB.ProfilesService.GetProfileDisplayName()}");
+
+            return InitializeAPConnection(savedUrl, savedSlot, password);
         }
 
         [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
+        public static IEnumerator<ICommandAction> AttemptInitializeAPConnection([APUrlSuggestion] string url, string player) {
+            return AttemptInitializeAPConnection(url, player, null);
+        }
+
+        [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
+        public static IEnumerator<ICommandAction> AttemptInitializeAPConnection([APUrlSuggestion] string url, string player, string password) {
+            string savedUrl = PlayerPrefs.GetString($"ap.url.{GameMB.ProfilesService.GetProfileDisplayName()}");
+            string savedSlot = PlayerPrefs.GetString($"ap.slotName.{GameMB.ProfilesService.GetProfileDisplayName()}");
+
+            if(savedUrl != string.Empty && savedUrl != url || savedSlot != string.Empty && savedSlot != player) {
+                GameMB.NewsService.PublishNews("WARNING: Not Connected!", "Connection attempt to AP blocked! The given url and player name are different from the one saved to this profile. To overwrite it, please use ap.connectForce.", AlertSeverity.Critical);
+                yield return new Value($"WARNING: Connection attempt to AP blocked! The given url or player name ('{url}' and '{player}') are different from the one saved to this profile ('{savedUrl}' and '{savedSlot}'). To overwrite it, please use ap.connectForce.");
+            } else {
+                // I have no intention of generating enumerated console responses, but this is the easiest way to play nice with the expected response structure
+                var enumerator = InitializeAPConnection(url, player, password);
+                while(enumerator.MoveNext()) {
+                    yield return enumerator.Current;
+                }
+            }
+        }
+
+            [Command("ap.connectForce", "Connects to Archipelago server. Requires url:port, slotName, and optionally password. Overwrites saved url and slot name for current profile.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static IEnumerator<ICommandAction> InitializeAPConnection([APUrlSuggestion] string url, string player) {
             return InitializeAPConnection(url, player, null);
         }
 
-        [Command("ap.connect", "Connects to Archipelago server. Requires url:port, slotName, and optionally password.", Platform.AllPlatforms, MonoTargetType.Single)]
+        [Command("ap.connectForce", "Connects to Archipelago server. Requires url:port, slotName, and optionally password. Overwrites saved url and slot name for current profile.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static IEnumerator<ICommandAction> InitializeAPConnection([APUrlSuggestion] string url, string player, string password) {
             if (session != null) {
                 DisconnectFromGame();
             }
+
+            Plugin.Log(GameMB.ProfilesService.GetProfileDisplayName());
 
             session = ArchipelagoSessionFactory.CreateSession(url);
             LoginResult loginResult;
@@ -97,8 +125,18 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
             LoginSuccessful loginSuccess = loginResult as LoginSuccessful;
 
-            PlayerPrefs.SetString("ap.url", url);
-            PlayerPrefs.SetString("ap.slotName", player);
+            PlayerPrefs.SetString($"ap.url.{GameMB.ProfilesService.GetProfileDisplayName()}", url);
+            PlayerPrefs.SetString($"ap.slotName.{GameMB.ProfilesService.GetProfileDisplayName()}", player);
+
+            session.Socket.ErrorReceived += (e, message) => {
+                session = null;
+                Plugin.Log(message);
+                UnityLambdaQueue.Add(() => {
+                    GameMB.NewsService.PublishNews("AP Connection Lost!", "Connection to AP has been lost! Make sure to reconnect, or you won't be able to send or receive items!", AlertSeverity.Critical);
+                });
+            };
+
+            lockedGoodSprite = TextureHelper.GetImageAsSprite("good-locked2.png", TextureHelper.SpriteType.EffectIcon);
 
             if (GameMB.IsGameActive) {
                 SyncGameStateToAP();
@@ -151,10 +189,10 @@ namespace Ryguy9999.ATS.ATSForAP {
                     Plugin.Log("Could not find production_recipes in SlotData, falling back to SlotData seed.");
 
                     if (loginSuccess.SlotData.ContainsKey("seed")) {
-                        RandomizeBuildingRecipes((long)loginSuccess.SlotData["recipe_shuffle"] == Constants.RECIPE_SHUFFLE_EXCLUDE_CRUDE_WS, (long)loginSuccess.SlotData["seed"]);
+                        Utils.RandomizeBuildingRecipes((long)loginSuccess.SlotData["recipe_shuffle"] == Constants.RECIPE_SHUFFLE_EXCLUDE_CRUDE_WS, (long)loginSuccess.SlotData["seed"]);
                     } else {
                         Plugin.Log("Could not find seed in SlotData, falling back to random seed.");
-                        RandomizeBuildingRecipes((long)loginSuccess.SlotData["recipe_shuffle"] == Constants.RECIPE_SHUFFLE_EXCLUDE_CRUDE_WS);
+                        Utils.RandomizeBuildingRecipes((long)loginSuccess.SlotData["recipe_shuffle"] == Constants.RECIPE_SHUFFLE_EXCLUDE_CRUDE_WS);
                     }
                 }
 
@@ -164,11 +202,25 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             Plugin.Log("Checking DLC settings...");
-            if (loginSuccess.SlotData.ContainsKey("enable_dlc")) {
-                EnabledDLC = (long)loginSuccess.SlotData["enable_dlc"] == 1;
+            if (loginSuccess.SlotData.ContainsKey("enable_keepers_dlc")) {
+                EnabledKeepersDLC = (long)loginSuccess.SlotData["enable_keepers_dlc"] == 1;
             } else {
-                Plugin.Log("Could not find enable_dlc in SlotData, falling back to false.");
-                EnabledDLC = false;
+                Plugin.Log("Could not find enable_keepers_dlc in SlotData, falling back to false.");
+                EnabledKeepersDLC = false;
+            }
+            if (loginSuccess.SlotData.ContainsKey("enable_nightwatchers_dlc")) {
+                EnabledNightwatchersDLC = (long)loginSuccess.SlotData["enable_nightwatchers_dlc"] == 1;
+            } else {
+                Plugin.Log("Could not find enable_nightwatchers_dlc in SlotData, falling back to false.");
+                EnabledNightwatchersDLC = false;
+            }
+
+            Plugin.Log("Checking biome key settings...");
+            if (loginSuccess.SlotData.ContainsKey("enable_biome_keys")) {
+                EnableBiomeKeys = (long)loginSuccess.SlotData["enable_biome_keys"] == 1;
+            } else {
+                Plugin.Log("Could not find enable_biome_keys in SlotData, falling back to false.");
+                EnableBiomeKeys = false;
             }
 
             Plugin.Log("Checking final map settings...");
@@ -207,15 +259,15 @@ namespace Ryguy9999.ATS.ATSForAP {
                 Plugin.Log("Could not find deathlink in SlotData, falling back to off.");
                 DeathlinkState = Constants.DEATHLINK_OFF;
             }
-            if ((long)loginSuccess.SlotData["deathlink"] >= Constants.DEATHLINK_DEATH_ONLY) {
-                deathLinkService = session.CreateDeathLinkService();
-                deathLinkService.EnableDeathLink();
-                deathLinkService.OnDeathLinkReceived += (deathLink) => {
-                    if(GameMB.IsGameActive) {
+            deathLinkService = session.CreateDeathLinkService();
+            deathLinkService.EnableDeathLink();
+            deathLinkService.OnDeathLinkReceived += (deathLink) => {
+                if (GameMB.IsGameActive && DeathlinkState >= Constants.DEATHLINK_DEATH_ONLY) {
+                    UnityLambdaQueue.Add(() => {
                         GameMB.VillagersService.KillVillagers(1, VillagerLossType.Death, Constants.DEATHLINK_REASON);
-                    }
-                };
-            }
+                    });
+                }
+            };
 
             Plugin.Log("Initializing gifting service...");
             ATSGiftingService.InitializeGifting(session);
@@ -238,96 +290,11 @@ namespace Ryguy9999.ATS.ATSForAP {
                 }
             });
 
+            UnityLambdaQueue.Add(() => {
+                GameMB.NewsService.PublishNews("AP Connected", $"Successfully connected to {url} as {player}. Have fun!", AlertSeverity.Info);
+            });
             Plugin.Log($"Connection to {url} as {player} complete!");
             yield return new Value($"Connection to {url} as {player} complete!");
-        }
-
-        public static bool HasReceivedGuardianPart(string part) {
-            if(!RequiredGuardianParts) {
-                return true;
-            }
-
-            return session.Items.AllItemsReceived.Any(itemInfo => itemInfo.ItemDisplayName == part);
-        }
-
-        public static int TotalGroveExpeditionLocationsCount() {
-            if(session == null) {
-                return 0;
-            }
-
-            int result = 0;
-            foreach (var loc in session.Locations.AllLocations) {
-                var location = session.Locations.GetLocationNameFromId(loc);
-
-                Match match = new Regex(@"Coastal Grove - \d\d?\w\w Expedition").Match(location);
-                if (match.Success) {
-                    result++;
-                }
-            }
-            return result;
-        }
-
-        public static int CheckedGroveExpeditionLocationsCount() {
-            if(session == null) {
-                return 0;
-            }
-
-            int result = 0;
-            foreach (var loc in session.Locations.AllLocationsChecked) {
-                var location = session.Locations.GetLocationNameFromId(loc);
-
-                Match match = new Regex(@"Coastal Grove - \d\d?\w\w Expedition").Match(location);
-                if (match.Success) {
-                    result++;
-                }
-            }
-            return result;
-        }
-
-        public static int GetNextUncheckedGroveExpedition() {
-            int lowestExpedition = -1;
-
-            foreach (var loc in session.Locations.AllMissingLocations) {
-                var location = session.Locations.GetLocationNameFromId(loc);
-
-                Match match = new Regex(@"Coastal Grove - (\d\d?)\w\w Expedition").Match(location);
-                if (match.Success) {
-                    int expeditionNumber = Int32.Parse(match.Groups[1].ToString());
-                    if(lowestExpedition < 0) {
-                        lowestExpedition = expeditionNumber;
-                    } else {
-                        lowestExpedition = Math.Min(lowestExpedition, expeditionNumber);
-                    }
-                }
-            }
-
-            return lowestExpedition;
-        }
-
-        public static int GetNextUncheckedCornerstoneForge() {
-            int lowestForge = -1;
-
-            foreach (var loc in session.Locations.AllMissingLocations) {
-                var location = session.Locations.GetLocationNameFromId(loc);
-
-                Match match = new Regex(@"Ashen Thicket - Forge (\d)\w\w Cornerstone").Match(location);
-                if (match.Success) {
-                    int forgeNumber = Int32.Parse(match.Groups[1].ToString());
-                    if(lowestForge < 0) {
-                        lowestForge = forgeNumber;
-                    } else {
-                        lowestForge = Math.Min(lowestForge, forgeNumber);
-                    }
-                }
-            }
-
-            return lowestForge;
-        }
-
-        public static bool HasReceivedItem(string item) {
-            item = Constants.ITEM_DICT.ContainsKey(item) ? Constants.ITEM_DICT[item].ToName() : item;
-
-            return !StateService.Effects.rawGoodsProductionBonus.ContainsKey(item) || StateService.Effects.rawGoodsProductionBonus[item] > -Constants.PRODUCTIVITY_MODIFIER / 2;
         }
 
         public static void SyncGameStateToAP() {
@@ -404,7 +371,7 @@ namespace Ryguy9999.ATS.ATSForAP {
                 }
 
                 // Blueprints
-                string buildingID = GetIDFromWorkshopName(item.ItemName);
+                string buildingID = Utils.GetIDFromWorkshopName(item.ItemName);
                 if (GameMB.Settings.ContainsBuilding(buildingID)) {
                     GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(buildingID));
                 }
@@ -421,7 +388,10 @@ namespace Ryguy9999.ATS.ATSForAP {
                         if (!OriginalGoodIcons.Keys.Contains(pair.Value.ToName())) {
                             OriginalGoodIcons.Add(pair.Value.ToName(), GameMB.Settings.GetGood(pair.Value.ToName()).icon);
                         }
-                        GameMB.Settings.GetGood(pair.Value.ToName()).icon = TextureHelper.GetImageAsSprite("good-locked.png", TextureHelper.SpriteType.EffectIcon);
+                        GameMB.Settings.GetGood(pair.Value.ToName()).icon = lockedGoodSprite;
+                        if (Constants.SERVICE_MAPPING.ContainsKey(pair.Key)) {
+                            GameMB.Settings.Needs.FirstOrDefault(need => need.Name == Constants.SERVICE_MAPPING[pair.Key]).presentation.overrideIcon = lockedGoodSprite;
+                        }
                     }
 
                     if (HasReceivedItem(pair.Key)) {
@@ -434,38 +404,6 @@ namespace Ryguy9999.ATS.ATSForAP {
         }
 
         public static void EnterGame() {
-            // TODO auto disable fishing hut recipes
-            // TODO HandleSlowUpdate maybe check if RacesService.raceLookup is null?
-            // TODO save connection per profile, soft block different details if in a settlement without ap.connectForce
-            // TODO toggle for filler bypassing resource lock
-            /* TODO use this to lock icon needs
-[Info   :Ryguy9999.ATS.ATSForAP] Any Housing Icon_Need_Shelter (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Beaver Housing Icon_Need_beaverHousing (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Fox Housing Icon_Need_FoxHousing (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Frog Housing Icon_Need_FrogHousing 1 (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Harpy Housing Icon_Need_HarpyHousing (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Human Housing Icon_Need_HumanHousing (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Lizard Housing Icon_Need_LizardHousing (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Jerky
-[Info   :Ryguy9999.ATS.ATSForAP] Porridge Icon_Resource_Porridge (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Paste
-[Info   :Ryguy9999.ATS.ATSForAP] Skewer
-[Info   :Ryguy9999.ATS.ATSForAP] Biscuits
-[Info   :Ryguy9999.ATS.ATSForAP] Pie
-[Info   :Ryguy9999.ATS.ATSForAP] Pickled Goods
-[Info   :Ryguy9999.ATS.ATSForAP] Boots Icon_Resource_Boots 1 (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Clothes Icon_Resource_Coats (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Leasiure Icon_Need_Leisure (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Bloodthirst Icon_Need_Brawling (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Religion Icon_Need_Religion (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Education Icon_Need_Education (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Luxury Icon_Need_Luxury (UnityEngine.Sprite)
-[Info   :Ryguy9999.ATS.ATSForAP] Treatment Icon_Need_Treatment (UnityEngine.Sprite)
-             */
-            foreach (var n in GameMB.Settings.Needs) {
-                Plugin.Log(n.Name + " " + n.presentation.overrideIcon);
-            }
-
             if(session == null) {
                 GameMB.NewsService.PublishNews("No AP session detected! Remember to connect!", "ap.connect url:port slotName [password]", AlertSeverity.Critical);
                 ApConnectionNews = (GameMB.NewsService.News.GetType().GetProperty("Value").GetValue(GameMB.NewsService.News, null) as List<News>)[0];
@@ -490,6 +428,21 @@ namespace Ryguy9999.ATS.ATSForAP {
             GameSubscriptions.Add(GameMB.TradeRoutesService.OnRouteCollected.Subscribe(new Action<RouteState>(HandleTradeRouteCollect)));
         }
 
+        [Command("ap.sendLocation", "For debugging purposes. Sends a location.", Platform.AllPlatforms, MonoTargetType.Single)]
+        public static void SendLocation(string location) {
+            CheckLocation(location);
+        }
+
+        [Command("ap.toggleLocationAlerts", "Toggles whether you receive alerts for checking AP locations.", Platform.AllPlatforms, MonoTargetType.Single)]
+        public static void ToggleLocationAlerts() {
+            ToggleLocationAlerts(!ShowLocationAlerts);
+        }
+
+        [Command("ap.toggleLocationAlerts", "Toggles whether you receive alerts for checking AP locations.", Platform.AllPlatforms, MonoTargetType.Single)]
+        public static void ToggleLocationAlerts(bool trueFalse) {
+            ShowLocationAlerts = trueFalse;
+        }
+
         [Command("ap.toggleLockIcons", "Toggles items locked by AP should have the AP lock icon.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static void ToggleLockIcons() {
             ToggleLockIcons(!ShowAPLockIcons);
@@ -507,69 +460,65 @@ namespace Ryguy9999.ATS.ATSForAP {
                     if(!OriginalGoodIcons.Keys.Contains(pair.Value.ToName())) {
                         OriginalGoodIcons.Add(pair.Value.ToName(), GameMB.Settings.GetGood(pair.Value.ToName()).icon);
                     }
-                    GameMB.Settings.GetGood(pair.Value.ToName()).icon = TextureHelper.GetImageAsSprite("good-locked.png", TextureHelper.SpriteType.EffectIcon);
+                    GameMB.Settings.GetGood(pair.Value.ToName()).icon = lockedGoodSprite;
+                    if (Constants.SERVICE_MAPPING.ContainsKey(pair.Key)) {
+                        GameMB.Settings.Needs.FirstOrDefault(need => need.Name == Constants.SERVICE_MAPPING[pair.Key]).presentation.overrideIcon = lockedGoodSprite;
+                    }
                 } else {
                     if (OriginalGoodIcons.Keys.Contains(pair.Value.ToName())) {
                         GameMB.Settings.GetGood(pair.Value.ToName()).icon = OriginalGoodIcons[pair.Value.ToName()];
+                        if (Constants.SERVICE_MAPPING.ContainsKey(pair.Key)) {
+                            GameMB.Settings.Needs.FirstOrDefault(need => need.Name == Constants.SERVICE_MAPPING[pair.Key]).presentation.overrideIcon = OriginalGoodIcons[pair.Value.ToName()];
+                        }
                     }
                 }
             }
         }
 
-        [Command("ap.restoreProduction", "For debugging purposes. Removes the negative production modifiers applied by the AP mod.")]
-        public static void RestoreProduction() {
-            foreach (KeyValuePair<string, GoodsTypes> pair in Constants.ITEM_DICT) {
-                string itemId = pair.Value.ToName();
-                if (!HasReceivedItem(itemId)) {
-                    SO.EffectsService.GrantRawGoodProduction(itemId, Constants.PRODUCTIVITY_MODIFIER);
-                }
+        [Command("ap.toggleDeathlink", "Changes deathlink handling from in game.", Platform.AllPlatforms, MonoTargetType.Single)]
+        public static IEnumerator<ICommandAction> ToggleDeathlink() {
+            // Cycle from off -> death_only -> leave_and_death -> off
+            switch (DeathlinkState) {
+            case Constants.DEATHLINK_OFF:
+                return ToggleDeathlink("death_only");
+            case Constants.DEATHLINK_DEATH_ONLY:
+                return ToggleDeathlink("leave_and_death");
+            case Constants.DEATHLINK_LEAVE_AND_DEATH:
+            default:
+                return ToggleDeathlink("off");
+            }
+        }
+        [Command("ap.toggleDeathlink", "Changes deathlink handling from in game.", Platform.AllPlatforms, MonoTargetType.Single)]
+        public static IEnumerator<ICommandAction> ToggleDeathlink([APDeathlinkSuggestion] string deathlinkSetting) {
+            switch (deathlinkSetting) {
+            case "off":
+                DeathlinkState = Constants.DEATHLINK_OFF;
+                yield return new Value("Deathlink turned off!");
+                break;
+            case "death_only":
+                DeathlinkState = Constants.DEATHLINK_DEATH_ONLY;
+                yield return new Value("Deathlink set to deaths only!");
+                break;
+            case "leave_and_death":
+                DeathlinkState = Constants.DEATHLINK_LEAVE_AND_DEATH;
+                yield return new Value("Deathlink set to leaving and deaths!");
+                break;
             }
         }
 
         [Command("ap.disconnect", "Disconnects from Archipelago server.", Platform.AllPlatforms, MonoTargetType.Single)]
         public static void DisconnectFromGame() {
-            if(session != null) {
+            if (session != null) {
                 session.Socket.DisconnectAsync();
                 session = null;
             }
         }
 
-        [Command("ap.randomizeRecipes", "For debugging purposes. Randomizes building recipes. Will only take effect on a new settlement.")]
-        public static void RandomizeBuildingRecipes() {
-            RandomizeBuildingRecipes(false, new System.Random().Next());
-        }
-        [Command("ap.randomizeRecipes", "For debugging purposes. Randomizes building recipes. Will only take effect on a new settlement.")]
-        public static void RandomizeBuildingRecipes(bool skipCrudeWS) {
-            RandomizeBuildingRecipes(skipCrudeWS, new System.Random().Next());
-        }
-        [Command("ap.randomizeRecipes", "For debugging purposes. Randomizes building recipes. Will only take effect on a new settlement.")]
-        public static void RandomizeBuildingRecipes(bool skipCrudeWS, long seed) {
-            var recipeList = new List<WorkshopRecipeModel>();
-            foreach (BuildingModel buildingModel in GameMB.Settings.Buildings) {
-                WorkshopModel workshopModel = buildingModel as WorkshopModel;
-                if (workshopModel == null || skipCrudeWS && workshopModel == (MB.Settings.GetBuilding("Crude Workstation") as WorkshopModel)) {
-                    continue;
-                }
-
-                recipeList.AddRange(workshopModel.recipes);
+        [Command("ap.say", "Sends text to AP server, to use for AP chat log, !commands, etc.")]
+        public static void SendMessageToAP(string message) {
+            if(session != null) {
+                session.Socket.SendPacket(new SayPacket() { Text = message });
             }
-            var rng = new System.Random(Convert.ToInt32(seed));
-            foreach (BuildingModel buildingModel in Serviceable.Settings.Buildings) {
-                WorkshopModel workshopModel = buildingModel as WorkshopModel;
-                if (workshopModel == null || skipCrudeWS && workshopModel == (MB.Settings.GetBuilding("Crude Workstation") as WorkshopModel)) {
-                    continue;
-                }
-
-                for (int i = 0; i < workshopModel.recipes.Length; i++) {
-                    var nextRecipeIndex = rng.Next(recipeList.Count);
-                    workshopModel.recipes[i] = recipeList[nextRecipeIndex];
-                    recipeList.RemoveAt(nextRecipeIndex);
-                }
-            }
-
-            // This service is responsible for the tooltips that show where goods are produced. It's capable of remapping the recipes after randomization, we just need to reach inside and tell it to do so
-            StaticRecipesService.GetType().GetField("goodsSourcesMap", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(SO.StaticRecipesService, new Dictionary<string, List<BuildingModel>>());
-            StaticRecipesService.GetType().GetMethod("MapGoodsSources", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(SO.StaticRecipesService, new object[0]);
         }
 
         private static void LoadBuildingRecipesFromSlotData(Dictionary<string, List<List<JValue>>> recipeDict) {
@@ -585,11 +534,11 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             foreach (var building in recipeDict) {
-                if (!GameMB.Settings.ContainsBuilding(GetIDFromWorkshopName(building.Key))) {
+                if (!GameMB.Settings.ContainsBuilding(Utils.GetIDFromWorkshopName(building.Key))) {
                     Plugin.Log("Unknown building key from SlotData: " + building.Key);
                     continue;
                 }
-                WorkshopModel model = GameMB.Settings.GetBuilding(GetIDFromWorkshopName(building.Key)) as WorkshopModel;
+                WorkshopModel model = GameMB.Settings.GetBuilding(Utils.GetIDFromWorkshopName(building.Key)) as WorkshopModel;
                 if(model == null) {
                     Plugin.Log("Null workshop model for building: " + building.Key);
                     continue;
@@ -617,15 +566,15 @@ namespace Ryguy9999.ATS.ATSForAP {
             StaticRecipesService.GetType().GetMethod("MapGoodsSources", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(SO.StaticRecipesService, new object[0]);
         }
 
-        [Command("ap.say", "Sends text to AP server, to use for AP chat log, !commands, etc.")]
-        public static void SendMessageToAP(string message) {
-            session.Socket.SendPacket(new SayPacket() { Text = message });
-        }
-
         private static Dictionary<long, int> locationsAlreadySent = new Dictionary<long, int>();
         public static bool CheckLocation(string location) {
             if(session == null) {
                 LocationQueue.Enqueue(location);
+                return false;
+            }
+
+            if(!HasReceivedBiome(Utils.GetBiomeNameFromID(MetaStateService.GameConditions.biome))) {
+                GameMB.NewsService.PublishNews("Forbidden biome!", "Your settlement is somehow in a biome you haven't unlocked through AP. No locations will be checked here!", AlertSeverity.Critical);
                 return false;
             }
 
@@ -661,41 +610,186 @@ namespace Ryguy9999.ATS.ATSForAP {
 
             Plugin.Log($"Sending AP Location: {location} (id: {locId})");
             session.Locations.CompleteLocationChecksAsync(locId);
+
+            if(ShowLocationAlerts) {
+                UnityLambdaQueue.Add(() => {
+                    GameMB.NewsService.PublishNews("Location Checked", $"You just sent an item from the location: {location}", AlertSeverity.Info);
+                });
+            }
             return true;
         }
 
-        public static string GetOrdinalSuffix(int number) {
-            switch(number) {
-            case 1:
-                return "st";
-            case 2:
-                return "nd";
-            case 3:
-                return "rd";
-            default:
-                return "th";
+        public static bool HasReceivedGuardianPart(string part) {
+            if (!RequiredGuardianParts) {
+                return true;
             }
+
+            return session.Items.AllItemsReceived.Any(itemInfo => itemInfo.ItemDisplayName == part);
         }
 
-        private static string GetIDFromWorkshopName(string name) {
-            return name
-                .Replace("Druid's Hut", "Druid")
-                .Replace("Flawless Druids Hut", "Flawless Druid")
-                .Replace("Alchemist's Hut", "Alchemist Hut")
-                .Replace("Teahouse", "Tea House")
-                .Replace("Greenhouse", "Greenhouse Workshop")
-                .Replace("Leatherworker", "Leatherworks")
-                .Replace("Flawless Leatherworker", "Flawless Leatherworks")
-                .Replace("Clay Pit", "Clay Pit Workshop")
-                .Replace("Advanced Rain Collector", "Advanced Rain Catcher")
-                .Replace("Lumber Mill", "Lumbermill")
-                .Replace("Forester's Hut", "Grove")
-                .Replace("Small Farm", "SmallFarm");
+        public static int TotalGroveExpeditionLocationsCount() {
+            if (session == null) {
+                return 0;
+            }
+
+            int result = 0;
+            foreach (var loc in session.Locations.AllLocations) {
+                var location = session.Locations.GetLocationNameFromId(loc);
+
+                Match match = new Regex(@"Coastal Grove - \d\d?\w\w Expedition").Match(location);
+                if (match.Success) {
+                    result++;
+                }
+            }
+            return result;
+        }
+
+        public static int CheckedGroveExpeditionLocationsCount() {
+            if (session == null) {
+                return 0;
+            }
+
+            int result = 0;
+            foreach (var loc in session.Locations.AllLocationsChecked) {
+                var location = session.Locations.GetLocationNameFromId(loc);
+
+                Match match = new Regex(@"Coastal Grove - \d\d?\w\w Expedition").Match(location);
+                if (match.Success) {
+                    result++;
+                }
+            }
+            return result;
+        }
+
+        public static int GetNextUncheckedGroveExpedition() {
+            int lowestExpedition = -1;
+
+            foreach (var loc in session.Locations.AllMissingLocations) {
+                var location = session.Locations.GetLocationNameFromId(loc);
+
+                Match match = new Regex(@"Coastal Grove - (\d\d?)\w\w Expedition").Match(location);
+                if (match.Success) {
+                    int expeditionNumber = Int32.Parse(match.Groups[1].ToString());
+                    if (lowestExpedition < 0) {
+                        lowestExpedition = expeditionNumber;
+                    } else {
+                        lowestExpedition = Math.Min(lowestExpedition, expeditionNumber);
+                    }
+                }
+            }
+
+            return lowestExpedition;
+        }
+
+        public static int GetNextUncheckedCornerstoneForge() {
+            int lowestForge = -1;
+
+            foreach (var loc in session.Locations.AllMissingLocations) {
+                var location = session.Locations.GetLocationNameFromId(loc);
+
+                Match match = new Regex(@"Ashen Thicket - Forge (\d)\w\w Cornerstone").Match(location);
+                if (match.Success) {
+                    int forgeNumber = Int32.Parse(match.Groups[1].ToString());
+                    if (lowestForge < 0) {
+                        lowestForge = forgeNumber;
+                    } else {
+                        lowestForge = Math.Min(lowestForge, forgeNumber);
+                    }
+                }
+            }
+
+            return lowestForge;
+        }
+
+        public static bool HasReceivedItem(string item) {
+            item = Constants.ITEM_DICT.ContainsKey(item) ? Constants.ITEM_DICT[item].ToName() : item;
+
+            return !StateService.Effects.rawGoodsProductionBonus.ContainsKey(item) || StateService.Effects.rawGoodsProductionBonus[item] > -Constants.PRODUCTIVITY_MODIFIER / 2;
+        }
+
+        public static bool HasReceivedBiome(string biome) {
+            if (!EnableBiomeKeys) {
+                return true;
+            }
+
+            return session.Items.AllItemsReceived.Any(itemInfo => itemInfo.ItemDisplayName == biome);
+        }
+
+        private static void HandleItemReceived(string itemName) {
+            if (!GameMB.IsGameActive) {
+                return;
+            }
+
+            // Guardian Part
+            if (itemName.StartsWith("Guardian ")) {
+                // No need to handle reception, we just check for it when opening the seal menu
+                return;
+            }
+
+            // Filler
+            if (itemName == "Survivor Bonding") {
+                GameMB.Settings.GetEffect("AncientGate_Hardships").Apply();
+                return;
+            }
+            Match match = new Regex(@"(\d+) Starting (.+)").Match(itemName);
+            if (match.Success) {
+                var fillerQty = Int32.Parse(match.Groups[1].ToString());
+                var fillerType = match.Groups[2].ToString();
+                if (fillerType == "Villagers") {
+                    VillagersToSpawn += fillerQty;
+                } else {
+                    GameMB.StorageService.Store(new Good(Constants.ITEM_DICT[fillerType].ToName(), fillerQty), StorageOperationType.Other);
+                    UnityLambdaQueue.Add(() => {
+                        GameMB.NewsService.PublishNews($"{fillerQty} {fillerType} received from AP!", $"{fillerQty} {fillerType} received. You will also receive this bonus in all future settlements.", AlertSeverity.Info, GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[fillerType].ToName()));
+                    });
+                }
+
+                return;
+            }
+
+            // Good unlock
+            if (Constants.ITEM_DICT.ContainsKey(itemName)) {
+                string itemId = Constants.ITEM_DICT[itemName].ToName();
+                if (!HasReceivedItem(itemId)) {
+                    if (OriginalGoodIcons.Keys.Contains(itemId)) {
+                        GameMB.Settings.GetGood(itemId).icon = OriginalGoodIcons[itemId];
+                        if (Constants.SERVICE_MAPPING.ContainsKey(itemName)) {
+                            GameMB.Settings.Needs.FirstOrDefault(need => need.Name == Constants.SERVICE_MAPPING[itemName]).presentation.overrideIcon = OriginalGoodIcons[itemId];
+                        }
+                    }
+                    SO.EffectsService.GrantRawGoodProduction(itemId, Constants.PRODUCTIVITY_MODIFIER);
+                    UnityLambdaQueue.Add(() => {
+                        GameMB.NewsService.PublishNews($"{itemName} unlocked!", $"{itemName} received from AP. You can now produce, gather, and obtain {itemName}.", AlertSeverity.Info, GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[itemName].ToName()));
+                    });
+                }
+                return;
+            }
+
+            // Blueprint
+            // Convert the visible AP name to the in game id, where only these few are different
+            string buildingID = Utils.GetIDFromWorkshopName(itemName);
+            if (GameMB.Settings.ContainsBuilding(buildingID)) {
+                GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(buildingID));
+                UnityLambdaQueue.Add(() => {
+                    GameMB.NewsService.PublishNews($"{itemName} BP received from AP!", $"{itemName} received. You can now build this blueprint in this and all future settlements.", AlertSeverity.Info, null);
+                });
+                return;
+            }
+
+            if(new string[] { "Royal Woodlands", "Coral Forest", "The Marshlands", "Scarlet Orchard", "Cursed Royal Woodlands", "Coastal Grove", "Ashen Thicket", "Bamboo Flats", "Rocky Ravine", "Sealed Forest" }.Contains(itemName) && GameMB.IsGameActive) {
+                GameMB.NewsService.PublishNews($"{itemName} unlocked from AP!", $"You received the key for {itemName} from AP. You can now check locations in that biome!", AlertSeverity.Info, null);
+                return;
+            }
+
+            Plugin.Log("Warning: Received unknown item " + itemName + " from AP!");
+            foreach (var b in GameMB.Settings.Buildings) {
+                Plugin.Log(b.name);
+            }
         }
 
         private static void HandleOrderRewards(OrderState order) {
             int orderIndex = GameMB.StateService.Orders.currentOrders.FindIndex(o => o.id == order.id) + 1;
-            CheckLocation("Completed Order - " + orderIndex + GetOrdinalSuffix(orderIndex) + " Pack");
+            CheckLocation("Completed Order - " + orderIndex + Utils.GetOrdinalSuffix(orderIndex) + " Pack");
         }
 
         private static void HandleGameResult(bool gameWon) {
@@ -705,8 +799,16 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             // Biome Victory
-            var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard").Replace("Bay", "Coastal Grove").Replace("Wasteland", "Ashen Thicket");
-            if(EnabledDLC || (biome != "Coastal Grove" && biome != "Ashen Thicket")) {
+            var biome = Utils.GetBiomeNameFromID(GameMB.MetaStateService.GameConditions.biome);
+            if (biome == "Coastal Grove" || biome == "Ashen Thicket") {
+                if(EnabledKeepersDLC) {
+                    CheckLocation("Victory - " + biome);
+                }
+            } else if(biome == "Bamboo Flats" || biome == "Rocky Ravine") {
+                if (EnabledNightwatchersDLC) {
+                    CheckLocation("Victory - " + biome);
+                }
+            } else {
                 CheckLocation("Victory - " + biome);
             }
 
@@ -716,21 +818,9 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
         }
 
-        private static int GetFullyUpgradedHousedAmount(string speciesName) {
-            int count = 0;
-
-            foreach(var pair in GameMB.BuildingsService.Houses) {
-                if(pair.Value.UpgradableState.level >= 2 && pair.Value.model.housingRaces.Contains(GameMB.Settings.GetRace(speciesName))) {
-                    count += pair.Value.state.residents.Count;
-                }
-            }
-
-            return count;
-        }
-
         private static void HandleHubLevelUp(Hearth hearth) {
             var hearthLevel = hearth.state.hubIndex + 1;
-            CheckLocation($"Upgraded Hearth - {hearthLevel + GetOrdinalSuffix(hearthLevel)} Tier");
+            CheckLocation($"Upgraded Hearth - {hearthLevel + Utils.GetOrdinalSuffix(hearthLevel)} Tier");
         }
 
         private static void HandleRelicResolve(Relic relic) {
@@ -791,17 +881,36 @@ namespace Ryguy9999.ATS.ATSForAP {
             if (GameMB.RacesService.HasRace("Foxes") && GameMB.ResolveService.GetReputationGainFor("Foxes") >= 1) {
                 CheckLocation("First Reputation through Resolve - Foxes");
             }
-            if (EnabledDLC && GameMB.RacesService.HasRace("Frog") && GameMB.ResolveService.GetReputationGainFor("Frog") >= 1) {
+            if (EnabledKeepersDLC && GameMB.RacesService.HasRace("Frog") && GameMB.ResolveService.GetReputationGainFor("Frog") >= 1) {
                 CheckLocation("First Reputation through Resolve - Frogs");
+            }
+            if (EnabledNightwatchersDLC && GameMB.RacesService.HasRace("Bat") && GameMB.ResolveService.GetReputationGainFor("Bat") >= 1) {
+                CheckLocation("First Reputation through Resolve - Bats");
             }
 
             // Overall Reputation for biome
             var repGained = GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Order) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Other) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Relics) + GameMB.ReputationService.GetReputationGainedFrom(ReputationChangeSource.Resolve);
-            var biome = GameMB.MetaStateService.GameConditions.biome.Replace("Moorlands", "Scarlet Orchard").Replace("Bay", "Coastal Grove").Replace("Wasteland", "Ashen Thicket").Replace("Sealed Biome", "Sealed Forest");
-            if (EnabledDLC || (biome != "Coastal Grove" && biome != "Ashen Thicket")) {
+            var biome = Utils.GetBiomeNameFromID(GameMB.MetaStateService.GameConditions.biome);
+            if (biome == "Coastal Grove" || biome == "Ashen Thicket") {
+                if (EnabledKeepersDLC) {
+                    foreach (int repIndex in ReputationLocationIndices) {
+                        if (repGained >= repIndex) {
+                            CheckLocation($"{repIndex}{Utils.GetOrdinalSuffix(repIndex)} Reputation - {biome}");
+                        }
+                    }
+                }
+            } else if (biome == "Bamboo Flats" || biome == "Rocky Ravine") {
+                if (EnabledNightwatchersDLC) {
+                    foreach (int repIndex in ReputationLocationIndices) {
+                        if (repGained >= repIndex) {
+                            CheckLocation($"{repIndex}{Utils.GetOrdinalSuffix(repIndex)} Reputation - {biome}");
+                        }
+                    }
+                }
+            } else {
                 foreach (int repIndex in ReputationLocationIndices) {
                     if (repGained >= repIndex) {
-                        CheckLocation($"{repIndex}{GetOrdinalSuffix(repIndex)} Reputation - {biome}");
+                        CheckLocation($"{repIndex}{Utils.GetOrdinalSuffix(repIndex)} Reputation - {biome}");
                     }
                 }
             }
@@ -822,28 +931,34 @@ namespace Ryguy9999.ATS.ATSForAP {
             if (GameMB.RacesService.HasRace("Foxes") && GameMB.ResolveService.GetResolveFor("Foxes") >= 49.5) {
                 CheckLocation("50 Resolve - Foxes");
             }
-            if (EnabledDLC && GameMB.RacesService.HasRace("Frog") && GameMB.ResolveService.GetResolveFor("Frog") >= 49.5) {
+            if (EnabledKeepersDLC && GameMB.RacesService.HasRace("Frog") && GameMB.ResolveService.GetResolveFor("Frog") >= 49.5) {
                 CheckLocation("50 Resolve - Frogs");
+            }
+            if (EnabledNightwatchersDLC && GameMB.RacesService.HasRace("Bat") && GameMB.ResolveService.GetResolveFor("Bat") >= 49.5) {
+                CheckLocation("50 Resolve - Bats");
             }
 
             // 20 Housed Villagers
-            if (GameMB.RacesService.HasRace("Human") && GetFullyUpgradedHousedAmount("Human") >= 20) {
+            if (GameMB.RacesService.HasRace("Human") && Utils.GetFullyUpgradedHousedAmount("Human") >= 20) {
                 CheckLocation("Have 20 Villagers in fully upgraded Housing - Humans");
             }
-            if (GameMB.RacesService.HasRace("Beaver") && GetFullyUpgradedHousedAmount("Beaver") >= 20) {
+            if (GameMB.RacesService.HasRace("Beaver") && Utils.GetFullyUpgradedHousedAmount("Beaver") >= 20) {
                 CheckLocation("Have 20 Villagers in fully upgraded Housing - Beavers");
             }
-            if (GameMB.RacesService.HasRace("Lizard") && GetFullyUpgradedHousedAmount("Lizard") >= 20) {
+            if (GameMB.RacesService.HasRace("Lizard") && Utils.GetFullyUpgradedHousedAmount("Lizard") >= 20) {
                 CheckLocation("Have 20 Villagers in fully upgraded Housing - Lizards");
             }
-            if (GameMB.RacesService.HasRace("Harpy") && GetFullyUpgradedHousedAmount("Harpy") >= 20) {
+            if (GameMB.RacesService.HasRace("Harpy") && Utils.GetFullyUpgradedHousedAmount("Harpy") >= 20) {
                 CheckLocation("Have 20 Villagers in fully upgraded Housing - Harpies");
             }
-            if (GameMB.RacesService.HasRace("Foxes") && GetFullyUpgradedHousedAmount("Foxes") >= 20) {
+            if (GameMB.RacesService.HasRace("Foxes") && Utils.GetFullyUpgradedHousedAmount("Foxes") >= 20) {
                 CheckLocation("Have 20 Villagers in fully upgraded Housing - Foxes");
             }
-            if (EnabledDLC && GameMB.RacesService.HasRace("Frog") && GetFullyUpgradedHousedAmount("Frog") >= 20) {
+            if (EnabledKeepersDLC && GameMB.RacesService.HasRace("Frog") && Utils.GetFullyUpgradedHousedAmount("Frog") >= 20) {
                 CheckLocation("Have 20 Villagers in fully upgraded Housing - Frogs");
+            }
+            if (EnabledNightwatchersDLC && GameMB.RacesService.HasRace("Bat") && Utils.GetFullyUpgradedHousedAmount("Bat") >= 20) {
+                CheckLocation("Have 20 Villagers in fully upgraded Housing - Bats");
             }
 
             // Handle filler villagers received mid game in a game thread, as ItemReceived causes crashes
@@ -855,10 +970,9 @@ namespace Ryguy9999.ATS.ATSForAP {
                 }
             }
 
-            // Handle filler item news in a game thread, as ItemReceived causes crashes
-            while (ItemsForNews.Any()) {
-                GameMB.NewsService.PublishNews(ItemsForNews[0].message, ItemsForNews[0].detail, AlertSeverity.Info, ItemsForNews[0].icon);
-                ItemsForNews.RemoveAt(0);
+            while(UnityLambdaQueue.Any()) {
+                UnityLambdaQueue[0].Invoke();
+                UnityLambdaQueue.RemoveAt(0);
             }
         }
 
@@ -899,72 +1013,6 @@ namespace Ryguy9999.ATS.ATSForAP {
 
             string goodName = route.good.name.Contains("[Water]") ? route.good.name.Replace("[Water] ", "") :  Constants.ITEM_DICT.FirstOrDefault(pair => pair.Value.ToName() == route.good.name).Key;
             CheckLocation($"Trade - {route.good.amount} {goodName}");
-        }
-
-        private static void HandleItemReceived(string itemName) {
-            if (!GameMB.IsGameActive) {
-                return;
-            }
-
-            // Guardian Part
-            if(itemName.StartsWith("Guardian ")) {
-                // No need to handle reception, we just check for it when opening the seal menu
-                return;
-            }
-
-            // Filler
-            if(itemName == "Survivor Bonding") {
-                GameMB.Settings.GetEffect("AncientGate_Hardships").Apply();
-                return;
-            }
-            Match match = new Regex(@"(\d+) Starting (.+)").Match(itemName);
-            if(match.Success) {
-                var fillerQty = Int32.Parse(match.Groups[1].ToString());
-                var fillerType = match.Groups[2].ToString();
-                if (fillerType == "Villagers") {
-                    VillagersToSpawn += fillerQty;
-                } else {
-                    GameMB.StorageService.Store(new Good(Constants.ITEM_DICT[fillerType].ToName(), fillerQty), StorageOperationType.Other);
-                    ItemsForNews.Add((GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[fillerType].ToName()), $"{fillerQty} {fillerType} received from AP!", $"{fillerQty} {fillerType} received. You will also receive this bonus in all future settlements."));
-                }
-
-                return;
-            }
-
-            // Good unlock
-            if (Constants.ITEM_DICT.ContainsKey(itemName)) {
-                string itemId = Constants.ITEM_DICT[itemName].ToName();
-                if (!HasReceivedItem(itemId)) {
-                    if (OriginalGoodIcons.Keys.Contains(itemId)) {
-                        GameMB.Settings.GetGood(itemId).icon = OriginalGoodIcons[itemId];
-                    }
-                    SO.EffectsService.GrantRawGoodProduction(itemId, Constants.PRODUCTIVITY_MODIFIER);
-                    ItemsForNews.Add((GameMB.Settings.GetGoodIcon(Constants.ITEM_DICT[itemName].ToName()), $"{itemName} unlocked!", $"{itemName} received from AP. You can now produce, gather, and obtain {itemName}."));
-                }
-                return;
-            }
-
-            // Blueprint
-            // Convert the visible AP name to the in game id, where only these few are different
-            string buildingID = GetIDFromWorkshopName(itemName);
-            if(GameMB.Settings.ContainsBuilding(buildingID)) {
-                GameMB.GameContentService.Unlock(GameMB.Settings.GetBuilding(buildingID));
-                ItemsForNews.Add((null, $"{itemName} BP received from AP!", $"{itemName} received. You can now build this blueprint in this and all future settlements."));
-                return;
-            }
-
-            Plugin.Log("Warning: Received unknown item " + itemName + " from AP!");
-            foreach (var b in GameMB.Settings.Buildings) {
-                Plugin.Log(b.name);
-            }
-        }
-
-        // Deprecated: used by deprecated Custom Hooked Effect Model approach
-        public static IObservable<int> OnAPItemReceived(string itemName) {
-            if (!itemCallbacks.ContainsKey(itemName)) {
-                itemCallbacks.Add(itemName, new Subject<int>());
-            }
-            return itemCallbacks[itemName];
         }
     }
 }
