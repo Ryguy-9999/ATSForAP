@@ -74,7 +74,7 @@ namespace Ryguy9999.ATS.ATSForAP {
         [HarmonyPatch(typeof(FishingHut), nameof(FishingHut.SetUp))]
         [HarmonyPatch(new Type[] { typeof(FishingHutModel), typeof(FishingHutState) })]
         private static void FishingHutSetUpPostfix(GathererHut __instance, FishingHutModel model, FishingHutState state) {
-            foreach (var recipe in __instance.state.recipes) {
+            foreach (var recipe in state.recipes) {
                 recipe.active = recipe.active && ArchipelagoService.HasReceivedItem(GameMB.Settings.GetRecipe(recipe.model).GetProducedGood());
             }
         }

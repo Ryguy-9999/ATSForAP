@@ -17,6 +17,7 @@ using QFSW.QC;
 using QFSW.QC.Actions;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -777,7 +778,9 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             if(new string[] { "Royal Woodlands", "Coral Forest", "The Marshlands", "Scarlet Orchard", "Cursed Royal Woodlands", "Coastal Grove", "Ashen Thicket", "Bamboo Flats", "Rocky Ravine", "Sealed Forest" }.Contains(itemName) && GameMB.IsGameActive) {
-                GameMB.NewsService.PublishNews($"{itemName} unlocked from AP!", $"You received the key for {itemName} from AP. You can now check locations in that biome!", AlertSeverity.Info, null);
+                UnityLambdaQueue.Add(() => {
+                    GameMB.NewsService.PublishNews($"{itemName} unlocked from AP!", $"You received the key for {itemName} from AP. You can now check locations in that biome!", AlertSeverity.Info, null);
+                });
                 return;
             }
 
