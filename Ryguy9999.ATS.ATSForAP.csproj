@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Ryguy9999.ATS.ATSForAP</AssemblyName>
     <Description>AP Mod for Against The Storm - by Ryguy9999</Description>
-    <Version>1.1.4</Version>
+    <Version>1.1.6</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <StormPath>D:\\SteamLibrary\\steamapps\\common\\Against the Storm</StormPath>

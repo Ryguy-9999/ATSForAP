@@ -17,7 +17,6 @@ using QFSW.QC;
 using QFSW.QC.Actions;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -76,7 +75,9 @@ namespace Ryguy9999.ATS.ATSForAP {
             string savedSlot = PlayerPrefs.GetString($"ap.slotName.{GameMB.ProfilesService.GetProfileDisplayName()}");
 
             if(savedUrl != string.Empty && savedUrl != url || savedSlot != string.Empty && savedSlot != player) {
-                GameMB.NewsService.PublishNews("WARNING: Not Connected!", "Connection attempt to AP blocked! The given url and player name are different from the one saved to this profile. To overwrite it, please use ap.connectForce.", AlertSeverity.Critical);
+                if(GameMB.IsGameActive) {
+                    GameMB.NewsService.PublishNews("WARNING: Not Connected!", "Connection attempt to AP blocked! The given url and player name are different from the one saved to this profile. To overwrite it, please use ap.connectForce.", AlertSeverity.Critical);
+                }
                 yield return new Value($"WARNING: Connection attempt to AP blocked! The given url or player name ('{url}' and '{player}') are different from the one saved to this profile ('{savedUrl}' and '{savedSlot}'). To overwrite it, please use ap.connectForce.");
             } else {
                 // I have no intention of generating enumerated console responses, but this is the easiest way to play nice with the expected response structure
@@ -351,12 +352,12 @@ namespace Ryguy9999.ATS.ATSForAP {
                 }
 
                 // Filler
-                if (item.ItemName == "Survivor Bonding" && (GameMB.GameSaveService.IsNewGame() || index >= previouslyProcessedLength)) {
+                if (item.ItemName == "Survivor Bonding" && index >= previouslyProcessedLength) {
                     GameMB.Settings.GetEffect("AncientGate_Hardships").Apply();
                     continue;
                 }
                 Match match = new Regex(@"(\d+) Starting (.+)").Match(item.ItemName);
-                if (match.Success && (GameMB.GameSaveService.IsNewGame() || index >= previouslyProcessedLength)) {
+                if (match.Success && index >= previouslyProcessedLength) {
                     var fillerQty = Int32.Parse(match.Groups[1].ToString());
                     var fillerType = match.Groups[2].ToString();
                     if (fillerType == "Villagers") {
@@ -409,6 +410,8 @@ namespace Ryguy9999.ATS.ATSForAP {
                 GameMB.NewsService.PublishNews("No AP session detected! Remember to connect!", "ap.connect url:port slotName [password]", AlertSeverity.Critical);
                 ApConnectionNews = (GameMB.NewsService.News.GetType().GetProperty("Value").GetValue(GameMB.NewsService.News, null) as List<News>)[0];
             } else {
+                // Reset the process tally so filler can be reprocessed
+                PlayerPrefs.SetInt("ap.previouslyProcessedLength", 0);
                 SyncGameStateToAP();
             }
 
@@ -423,7 +426,8 @@ namespace Ryguy9999.ATS.ATSForAP {
             GameSubscriptions.Add(GameMB.OrdersService.OnOrderCompleted.Subscribe(new Action<OrderState>(HandleOrderRewards)));
             GameSubscriptions.Add(GameMB.ReputationService.OnGameResult.Subscribe(new Action<bool>(HandleGameResult)));
             GameSubscriptions.Add(GameMB.GameBlackboardService.OnHubLeveledUp.Subscribe(new Action<Hearth>(HandleHubLevelUp)));
-            GameSubscriptions.Add(GameMB.GameBlackboardService.OnRelicResolved.Subscribe(new Action<Relic>(HandleRelicResolve)));
+            // For some reason this subscription causes errors for some users inconsistently. Replacing with Harmony prefix
+            //GameSubscriptions.Add(GameMB.GameBlackboardService.OnRelicResolved.Subscribe(new Action<Relic>(HandleRelicResolve)));
             GameSubscriptions.Add(GameMB.RXService.Interval(1, true).Subscribe(new Action(HandleSlowUpdate)));
             GameSubscriptions.Add(GameMB.TradeRoutesService.OnStandingLeveledUp.Subscribe(new Action<TradeTownState>(HandleStandingLevelUp)));
             GameSubscriptions.Add(GameMB.TradeRoutesService.OnRouteCollected.Subscribe(new Action<RouteState>(HandleTradeRouteCollect)));
@@ -729,7 +733,9 @@ namespace Ryguy9999.ATS.ATSForAP {
 
             // Filler
             if (itemName == "Survivor Bonding") {
-                GameMB.Settings.GetEffect("AncientGate_Hardships").Apply();
+                UnityLambdaQueue.Add(() => {
+                    GameMB.Settings.GetEffect("AncientGate_Hardships").Apply();
+                });
                 return;
             }
             Match match = new Regex(@"(\d+) Starting (.+)").Match(itemName);
@@ -826,7 +832,7 @@ namespace Ryguy9999.ATS.ATSForAP {
             CheckLocation($"Upgraded Hearth - {hearthLevel + Utils.GetOrdinalSuffix(hearthLevel)} Tier");
         }
 
-        private static void HandleRelicResolve(Relic relic) {
+        public static void HandleRelicResolve(Relic relic) {
             if(relic.model.dangerLevel == DangerLevel.Dangerous) {
                 CheckLocation("Complete a Dangerous Glade Event");
             }
@@ -865,6 +871,14 @@ namespace Ryguy9999.ATS.ATSForAP {
 
         private static void HandleSlowUpdate() {
             if(!GameMB.IsGameActive) {
+                return;
+            }
+
+            try {
+                // I don't know why I have to do this, but the exception is distracting in the console, so here we are
+                GameMB.RacesService.HasRace("Human");
+            } catch (NullReferenceException e) {
+                Plugin.Log("Caught HasRace NRE, skipping SlowUpdate");
                 return;
             }
 

@@ -19,6 +19,7 @@ using Eremite.View.HUD.Reputation;
 using Eremite.View.HUD.TradeRoutes;
 using Eremite.View.Menu;
 using Eremite.View.Menu.Pick;
+using Eremite.View.SaveSupport;
 using Eremite.WorldMap;
 using Eremite.WorldMap.UI;
 using Eremite.WorldMap.UI.CustomGames;
@@ -439,6 +440,18 @@ namespace Ryguy9999.ATS.ATSForAP {
             }
 
             return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Relic), nameof(Relic.FireResolveEvents))]
+        private static void RelicResolvePrefix(Relic __instance) {
+            ArchipelagoService.HandleRelicResolve(__instance);
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(DemoLandingPopup), nameof(DemoLandingPopup.CheckForShowDelayed))]
+        private static bool DemoShowDelayedPrefix() {
+             return false;
         }
     }
 }
