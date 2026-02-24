@@ -447,11 +447,5 @@ namespace Ryguy9999.ATS.ATSForAP {
         private static void RelicResolvePrefix(Relic __instance) {
             ArchipelagoService.HandleRelicResolve(__instance);
         }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(DemoLandingPopup), nameof(DemoLandingPopup.CheckForShowDelayed))]
-        private static bool DemoShowDelayedPrefix() {
-             return false;
-        }
     }
 }

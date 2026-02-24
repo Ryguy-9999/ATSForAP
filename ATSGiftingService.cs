@@ -176,7 +176,16 @@ namespace Ryguy9999.ATS.ATSForAP {
                 return;
             }
 
+            Dictionary<string, Gift> giftAggregate = new Dictionary<string, Gift>();
             foreach (var gift in gifts) {
+                if(!giftAggregate.Keys.Contains(gift.Value.ItemName + gift.Value.SenderSlot)) {
+                    giftAggregate[gift.Value.ItemName + gift.Value.SenderSlot] = gift.Value;
+                } else {
+                    giftAggregate[gift.Value.ItemName + gift.Value.SenderSlot].Amount += gift.Value.Amount;
+                }
+            }
+
+            foreach (var gift in giftAggregate) {
                 HandleGift(gift.Value);
             }
         }

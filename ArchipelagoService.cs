@@ -99,8 +99,6 @@ namespace Ryguy9999.ATS.ATSForAP {
                 DisconnectFromGame();
             }
 
-            Plugin.Log(GameMB.ProfilesService.GetProfileDisplayName());
-
             session = ArchipelagoSessionFactory.CreateSession(url);
             LoginResult loginResult;
             try {
@@ -713,7 +711,7 @@ namespace Ryguy9999.ATS.ATSForAP {
         }
 
         public static bool HasReceivedBiome(string biome) {
-            if (!EnableBiomeKeys) {
+            if (!EnableBiomeKeys || session == null) {
                 return true;
             }
 
